@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 args = dict(
     name='sct_pipeline',
     version='0.1',
-    description="Central vein sign segmentation",
+    description="Spinalcordtoolbox segmentation",
     author='Jeffrey Glaister',
     author_email='jeff.glaister@gmail.com',
     url='https://github.com/jglaister/sct_pipeline',
