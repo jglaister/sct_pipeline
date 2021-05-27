@@ -61,5 +61,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect([(input_node, sct_registermultimodal, [('mt_on_sc_image', 'dest_image')])])
     wf.connect([(input_node, sct_registermultimodal, [('mt_off_sc_image', 'input_image')])])
 
+    
+
 
 
