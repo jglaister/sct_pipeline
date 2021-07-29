@@ -2,6 +2,7 @@ import os
 from nipype.interfaces.base import CommandLine, CommandLineInputSpec, TraitedSpec, File, traits, isdefined, Directory
 from nipype.utils.filemanip import split_filename
 
+'''
 sct_maths
 sct_propseg
 sct_deepseg_sc
@@ -16,6 +17,7 @@ sct_register_to_template
 sct_warp_template
 sct_extract_metric
 sct_process_segmentation
+'''
 
 #sct_deepseg_sc
 class SCTDeepSegInputSpec(CommandLineInputSpec):
@@ -23,14 +25,14 @@ class SCTDeepSegInputSpec(CommandLineInputSpec):
     contrast = traits.Enum('t1','t2','t2s','dwi', desc='Input image contrast type', argstr='-c %s', mandatory=True)
     #centerline = traits.Enum('svm','cnn','file', desc='Method to obtain centerline (viewer method disabled)', argstr='-centerline %s')
     #centerline_file = File(exists=True, desc='Input spine image if a file is used to find centerline', argstr='-file_centerline %s')
-    #threshold = traits.Range(0.0, 1.0, desc='Threshold', argstr='-thr %g')
+    threshold = traits.Range(-1.0, 1.0, desc='Threshold (Set to -1 for soft seg)', argstr='-thr %g')
     #kernel = traits.Enum('2d','3d', desc='Kernel (2d or 3d)', argstr='-kernel %s')
     #includes_brain = traits.Range(0, 1, desc='1 if image contains brain, 0 otherwise', argstr='-brain %d')
     output_directory = Directory(desc='output directory', argstr='-ofolder %s')
 
 
 class SCTDeepSegOutputSpec(TraitedSpec):
-    spine_segmentation = File(exists=True, desc='hard segmentation')
+    spine_segmentation = File(exists=True, desc='segmentation')
 
 
 class SCTDeepSeg(CommandLine):
@@ -153,4 +155,27 @@ class SCTProcessSeg(CommandLine):
             outputs['output_csv'] = os.path.abspath('csa.csv')
         return outputs
 
+class SCTRegisterToTemplateInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    spine_segmentation = File(exists=True, desc='Input spine segmentation', argstr='-s %s', mandatory=True)
+    contrast = traits.Enum('t1', 't2', 't2s', desc='Input image contrast type', argstr='-c %s')
+    disc_labels = File(exists=True, desc='Input disc label file', argstr='-ldisc %s', mandatory=True)
+
+
+class SCTRegisterToTemplateOutputSpec(TraitedSpec):
+    output_file = File(exists=True, desc='Output CSV')
+
+
+class SCTRegisterToTemplate(CommandLine):
+    input_spec = SCTRegisterToTemplateInputSpec
+    output_spec = SCTRegisterToTemplateOutputSpec
+    _cmd = 'sct_process_segmentation'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        if isdefined(self.inputs.output_filename):
+            outputs['output_file'] = os.path.abspath(self.inputs.output_filename)
+        else:
+            outputs['output_file'] = os.path.abspath('csa.csv')
+        return outputs
 

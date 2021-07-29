@@ -16,11 +16,10 @@ args = dict(
     description="Spinalcordtoolbox segmentation",
     author='Jeffrey Glaister',
     author_email='jeff.glaister@gmail.com',
-    url='https://github.com/jglaister/sct_pipeline',
-    keywords="central vein sign"
+    url='https://github.com/jglaister/sct_pipeline'
 )
 
-setup(install_requires=['nipype', 'rpy2', 'numpy', 'nibabel', 'scikit-image'],
-      packages=['sct_pipeline'],
+setup(install_requires=['nipype', 'numpy', 'nibabel'],
+      packages=['sct_pipeline', 'vbm_pipeline'],
       scripts=glob('bin/*'), **args)
 
