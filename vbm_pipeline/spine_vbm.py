@@ -181,11 +181,10 @@ def create_spine_template_workflow(output_root):
 
     init_randomise = pe.Node(interface=fsl.model.Randomise(), name='randomise')
     init_randomise.inputs.base_name = 'GM_mod_merg_s1'
-
     wf.connect(gaussian_filter, 'out_file', init_randomise, 'in_file')
     wf.connect(spine_mask, 'out_file', init_randomise, 'mask')
-    wf.connect(gaussian_filter, 'design_mat', init_randomise, 'design_mat')
-    wf.connect(gaussian_filter, 'tcon', init_randomise, 'tcon')
+    wf.connect(input_node, 'design_mat', init_randomise, 'design_mat')
+    wf.connect(input_node, 'tcon', init_randomise, 'tcon')
 
     return wf
 
