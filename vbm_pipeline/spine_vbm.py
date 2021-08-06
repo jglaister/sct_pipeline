@@ -152,7 +152,7 @@ def create_spine_template_workflow(output_root):
     final_seg_transform = pe.MapNode(interface=fsl.ApplyWarp(), iterfield=['in_file', 'field_file'],
                                          name='final_seg_transform')
     wf.connect(input_node, 'seg_files', final_seg_transform, 'in_file')
-    wf.connect(final_registration, 'out_matrix_file', final_seg_transform, 'field_file')
+    wf.connect(final_registration, 'field_file', final_seg_transform, 'field_file')
     wf.connect(nonlinear_template, 'template_file', final_seg_transform, 'ref_file')
 
     spine_mul_jac = pe.MapNode(interface=fsl.ImageMaths(), iterfield=['in_file', 'in_file2'], name='spine_mul_jac')
