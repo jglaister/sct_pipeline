@@ -142,7 +142,7 @@ def create_spine_template_workflow(output_root):
 
     # Split here into a separate workflow
     final_registration = pe.MapNode(interface=fsl.FNIRT(), iterfield=['in_file', 'affine_file'],
-                                        name='nonlinear_registration')
+                                        name='final_registration')
     final_registration.inputs.fieldcoeff_file = True
     final_registration.inputs.jacobian_file = True
     wf.connect(input_node, 'seg_files', final_registration, 'in_file')
