@@ -26,12 +26,12 @@ class PipelineWorkflow(Workflow):
             name += '_' + scan_id
         base_dir = os.path.join(scan_directory, self.patient_id, 'pipeline')
         super(PipelineWorkflow, self).__init__(name, base_dir)
-        self.config['execution']['crashdump_dir'] = os.path.join(self.base_dir, self.name)
+        # self.config['execution']['crashdump_dir'] = os.path.join(self.base_dir, self.name)
 
-    def clean(self):
-        shutil.rmtree(os.path.join(self.base_dir, self.name))
-        if os.path.basename(self.base_dir) == 'pipeline' and os.listdir(self.base_dir) == []:
-            shutil.rmtree(self.base_dir)
+    # def clean(self):
+    #    shutil.rmtree(os.path.join(self.base_dir, self.name))
+    #    if os.path.basename(self.base_dir) == 'pipeline' and os.listdir(self.base_dir) == []:
+    #        shutil.rmtree(self.base_dir)
 
 '''def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None, compute_csa=False):
 

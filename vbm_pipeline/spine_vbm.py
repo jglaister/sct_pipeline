@@ -52,6 +52,7 @@ class GenerateTemplate(base.BaseInterface):
 
 
 def create_spine_template_workflow(output_root):
+    # TODO: Split into seperate workflows
     wf = pe.Workflow(name='spine_template', base_dir=os.path.join(output_root, 'spine_template'))
 
     input_node = pe.Node(
@@ -72,7 +73,9 @@ def create_spine_template_workflow(output_root):
     wf.connect(input_node, 'spine_files', rigid_registration, 'in_file')
     wf.connect(input_node, 'init_template', rigid_registration, 'reference')
 
-    affine_registration = pe.MapNode(interface=fsl.FLIRT(), iterfield=['in_file', 'in_matrix_file'], name='affine_registration')
+    affine_registration = pe.MapNode(interface=fsl.FLIRT(),
+                                     iterfield=['in_file', 'in_matrix_file'],
+                                     name='affine_registration')
     affine_registration.inputs.cost = 'normcorr'
     affine_registration.inputs.cost_func = 'normcorr'
     affine_registration.inputs.dof = 12
@@ -89,22 +92,26 @@ def create_spine_template_workflow(output_root):
                               name='affine_template')
     wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
 
-    affine_seg_transform = pe.MapNode(interface=fsl.ApplyXFM(), name='affine_seg_transform')
+    affine_seg_transform = pe.MapNode(interface=fsl.ApplyXFM(),
+                                      iterfield=['in_file', 'in_matrix_file'],
+                                      name='affine_seg_transform')
     affine_seg_transform.inputs.apply_xfm = True
     wf.connect(input_node, 'seg_files', affine_seg_transform, 'in_file')
     wf.connect(affine_registration, 'out_matrix_file', affine_seg_transform, 'in_matrix_file')
     wf.connect(input_node, 'init_template', affine_seg_transform, 'reference')
 
     affine_seg_4d_template = pe.Node(interface=fsl.Merge(),
-                                 name='affine_seg_4d_template')
+                                     name='affine_seg_4d_template')
     affine_seg_4d_template.inputs.dimension = 't'
     wf.connect(affine_seg_transform, 'out_file', affine_seg_4d_template, 'in_files')
 
     affine_seg_template = pe.Node(interface=GenerateTemplate(),
-                              name='affine_seg_template')
+                                  name='affine_seg_template')
     wf.connect(affine_seg_4d_template, 'merged_file', affine_seg_template, 'input_file')
 
-    nonlinear_registration = pe.MapNode(interface=fsl.FNIRT(), iterfield=['in_file', 'affine_file'], name='nonlinear_registration')
+    nonlinear_registration = pe.MapNode(interface=fsl.FNIRT(),
+                                        iterfield=['in_file', 'affine_file'],
+                                        name='nonlinear_registration')
     nonlinear_registration.inputs.fieldcoeff_file = True
     wf.connect(input_node, 'seg_files', nonlinear_registration, 'in_file')
     wf.connect(affine_registration, 'out_matrix_file', nonlinear_registration, 'affine_file')
