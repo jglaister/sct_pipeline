@@ -128,7 +128,7 @@ def create_spine_template_workflow(output_root):
 
     nonlinear_seg_transform = pe.MapNode(interface=fsl.ApplyWarp(), iterfield=['in_file', 'field_file'], name='nonlinear_seg_transform')
     wf.connect(input_node, 'seg_files', nonlinear_seg_transform, 'in_file')
-    wf.connect(nonlinear_registration, 'out_matrix_file', nonlinear_seg_transform, 'field_file')
+    wf.connect(nonlinear_registration, 'field_file', nonlinear_seg_transform, 'field_file')
     wf.connect(affine_template, 'template_file', nonlinear_seg_transform, 'ref_file')
 
     nonlinear_seg_4d_template = pe.Node(interface=fsl.Merge(),
