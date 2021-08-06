@@ -163,7 +163,7 @@ def create_spine_template_workflow(output_root):
     spine_merge = pe.Node(interface=fsl.Merge(),
                        name='spine_merge')
     spine_merge.inputs.dimension = 't'
-    wf.connect(final_seg_transform, 'warped_file', spine_merge, 'in_files')
+    wf.connect(final_seg_transform, 'out_file', spine_merge, 'in_files')
 
     spine_mod_merge = pe.Node(interface=fsl.Merge(),
                            name='spine_mod_merge')
