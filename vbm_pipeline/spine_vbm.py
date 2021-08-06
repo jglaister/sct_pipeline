@@ -73,6 +73,11 @@ def create_spine_template_workflow(output_root):
     wf.connect(input_node, 'spine_files', rigid_registration, 'in_file')
     wf.connect(input_node, 'init_template', rigid_registration, 'reference')
 
+    rigid_4d_template = pe.Node(interface=fsl.Merge(),
+                                 name='rigid_4d_template')
+    rigid_4d_template.inputs.dimension = 't'
+    wf.connect(rigid_registration, 'out_file', rigid_4d_template, 'in_files')
+
     affine_registration = pe.MapNode(interface=fsl.FLIRT(),
                                      iterfield=['in_file', 'in_matrix_file'],
                                      name='affine_registration')
