@@ -179,3 +179,35 @@ class SCTRegisterToTemplate(CommandLine):
             outputs['output_file'] = os.path.abspath('csa.csv')
         return outputs
 
+
+class SCTRegisterMultimodalInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    destination_image = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
+    input_segmentation = File(exists=True, desc='Input spine segmentation', argstr='-iseg %s')
+    destination_segmentation = File(exists=True, desc='Input spine segmentation', argstr='-dseg %s')
+    input_label = File(exists=True, desc='Input spine segmentation', argstr='-ilabel %s')
+    destination_label = File(exists=True, desc='Input spine segmentation', argstr='-dlabel %s')
+    mask = File(exists=True, desc='Input spine segmentation', argstr='-m %s')
+    param = traits.Str(desc='Parameters', argstr='-param %s')
+    interpolation = traits.Enum('linear', 'nn', 'spline', desc='Input image contrast type', argstr='-x %s')
+    #contrast = traits.Enum('t1', 't2', 't2s', desc='Input image contrast type', argstr='-c %s')
+    #disc_labels = File(exists=True, desc='Input disc label file', argstr='-ldisc %s', mandatory=True)
+
+
+class SCTRegisterMultimodalOutputSpec(TraitedSpec):
+    output_file = File(exists=True, desc='Output CSV')
+    output_warp = File(exists=True, desc='Output CSV')
+
+
+class SCTRegisterMultimodal(CommandLine):
+    input_spec = SCTRegisterMultimodalInputSpec
+    output_spec = SCTRegisterMultimodalOutputSpec
+    _cmd = 'sct_register_multimodal'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        if isdefined(self.inputs.output_filename):
+            outputs['output_file'] = os.path.abspath(self.inputs.output_filename)
+        else:
+            outputs['output_file'] = os.path.abspath('csa.csv')
+        return outputs

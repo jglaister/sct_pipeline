@@ -6,6 +6,8 @@ import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
 import nipype.interfaces.base as base
 
+from sct_pipeline.interfaces import SCTRegisterMultimodal
+
 
 class GenerateTemplateInputSpec(base.BaseInterfaceInputSpec):
     input_file = base.File(exists=True, desc='input image', mandatory=True)
