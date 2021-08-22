@@ -8,7 +8,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--spine-files', nargs='+', type=str, required=True)
     #parser.add_argument('-s', '--seg-files', nargs='+', type=str, required=True)
-    parser.add_argument('-it', '--init-template', type=str, required=True)
+    #parser.add_argument('-it', '--init-template', type=str, required=True)
     parser.add_argument('--design-mat', type=str, required=True)
     parser.add_argument('--tcon', type=str, required=True)
     # parser.add_argument('-s', '--sigma', type=int, default=3)
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     #if args.seg_files is not None:
     #    args.seg_files = [os.path.abspath(os.path.expanduser(image)) for image in args.seg_files]
 
-    for a in ['init_template', 'design_mat', 'tcon']:
+    for a in ['design_mat', 'tcon']:
         if getattr(args, a) is not None:
             setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         wf.inputs.input_node.spine_files = args.spine_files
     #if args.seg_files is not None:
     #    wf.inputs.input_node.seg_files = args.seg_files
-    for a in ['init_template', 'design_mat', 'tcon']:
+    for a in ['design_mat', 'tcon']:
         if getattr(args, a) is not None:
             setattr(wf.inputs.input_node, a, getattr(args, a))
 
