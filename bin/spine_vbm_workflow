@@ -29,8 +29,8 @@ if __name__ == '__main__':
 
     if args.spine_files is not None:
         wf.inputs.input_node.spine_files = args.spine_files
-    if args.seg_files is not None:
-        wf.inputs.input_node.seg_files = args.seg_files
+    #if args.seg_files is not None:
+    #    wf.inputs.input_node.seg_files = args.seg_files
     for a in ['init_template', 'design_mat', 'tcon']:
         if getattr(args, a) is not None:
             setattr(wf.inputs.input_node, a, getattr(args, a))
