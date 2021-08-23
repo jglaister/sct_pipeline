@@ -255,8 +255,8 @@ class SCTStraightenSpinalcord(CommandLine):
         return outputs
 
 class SCTApplyTransformInputSpec(CommandLineInputSpec):
-    input_file = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
-    destination_file = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    destination_image = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
     transforms = File(exists=True, desc='Input spine image', argstr='-w %s', mandatory=True)
     interpolation = traits.Enum('spline', 'linear', 'nn', 'label', desc='Input image contrast type', argstr='-x %s')
 
