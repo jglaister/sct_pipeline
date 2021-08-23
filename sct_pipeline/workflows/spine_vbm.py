@@ -9,48 +9,7 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 
 
-class GenerateTemplateInputSpec(base.BaseInterfaceInputSpec):
-    input_file = base.File(exists=True, desc='input image', mandatory=True)
-    flip_axis = base.traits.Int(0, desc='Axis number to flip (-1 to not flip)', usedefault=True)
-    output_name = base.traits.Str(desc='Filename for output template')
 
-
-class GenerateTemplateOutputSpec(base.TraitedSpec):
-    template_file = base.File(exists=True, desc='output template')
-
-
-class GenerateTemplate(base.BaseInterface):
-    input_spec = GenerateTemplateInputSpec
-    output_spec = GenerateTemplateOutputSpec
-
-    def _run_interface(self, runtime):
-        import nibabel as nib
-        import numpy as np
-
-        vol_obj = nib.load(self.inputs.input_file)
-        vol_data = vol_obj.get_fdata()
-
-        if self.inputs.flip_axis == -1:
-            template_data = np.average(vol_data, axis=-1)
-        else:
-            template_data = (np.average(vol_data, axis=-1) + np.average(np.flip(vol_data, axis=self.inputs.flip_axis), axis=-1)) / 2
-
-        template_obj = nib.Nifti1Image(template_data, vol_obj.affine, vol_obj.header)
-        if base.isdefined(self.inputs.output_name):
-            output_name = self.inputs.output_name + '.nii.gz'
-        else:
-            output_name = 'template.nii.gz'
-        template_obj.to_filename(output_name)
-
-        return runtime
-
-    def _list_outputs(self):
-        outputs = self._outputs().get()
-        if base.isdefined(self.inputs.output_name):
-            outputs['template_file'] = os.path.abspath(self.inputs.output_name + '.nii.gz')
-        else:
-            outputs['template_file'] = os.path.abspath('template.nii.gz')
-        return outputs
 
 
 def create_spine_template_workflow(output_root, template_index=0):
@@ -61,13 +20,13 @@ def create_spine_template_workflow(output_root, template_index=0):
         interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
         name='input_node')
 
-    spine_segmentation = pe.MapNode(interface=sct_seg.SCTDeepSeg(),
+    spine_segmentation = pe.MapNode(interface=sct_seg.DeepSeg(),
                                     iterfield=['input_image'],
                                     name='spine_segmentation')
     spine_segmentation.inputs.contrast = 't2'
     wf.connect(input_node, 'spine_files', spine_segmentation, 'input_image')
 
-    label_vertebrae = pe.MapNode(interface=sct_seg.SCTLabelVertebrae(),
+    label_vertebrae = pe.MapNode(interface=sct_seg.LabelVertebrae(),
                                  iterfield=['input_image', 'spine_segmentation'],
                                  name='label_vertebrae')
     label_vertebrae.inputs.contrast = 't2'
@@ -75,13 +34,13 @@ def create_spine_template_workflow(output_root, template_index=0):
     wf.connect(spine_segmentation, 'spine_segmentation', label_vertebrae, 'spine_segmentation')
 
     # Straighten the spinalcord, then apply the warp field to the segmentation and label maps
-    straighten_spinalcord = pe.MapNode(interface=sct_reg.SCTStraightenSpinalcord(),
+    straighten_spinalcord = pe.MapNode(interface=sct_reg.StraightenSpinalcord(),
                                        iterfield=['input_image','segmentation_image'],
                                        name='straighten_spinalcord')
     wf.connect(input_node, 'spine_files', straighten_spinalcord, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', straighten_spinalcord, 'segmentation_image')
 
-    straighten_segmentation = pe.MapNode(interface=sct_reg.SCTApplyTransform(),
+    straighten_segmentation = pe.MapNode(interface=sct_reg.ApplyTransform(),
                                          iterfield=['input_image', 'destination_image', 'transforms'],
                                          name='straighten_segmentation')
     straighten_segmentation.inputs.interpolation = 'linear'  # Soft segmentation, so use linear
@@ -89,7 +48,7 @@ def create_spine_template_workflow(output_root, template_index=0):
     wf.connect(straighten_spinalcord, 'straightened_input', straighten_segmentation, 'destination_image')
     wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_segmentation, 'transforms')
 
-    straighten_labels = pe.MapNode(interface=sct_reg.SCTApplyTransform(),
+    straighten_labels = pe.MapNode(interface=sct_reg.ApplyTransform(),
                                    iterfield=['input_image', 'destination_image', 'transforms'],
                                    name='straighten_labels')
     straighten_labels.inputs.interpolation = 'nn'  # Hard label segmentation, so use nn
