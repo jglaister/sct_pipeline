@@ -220,6 +220,7 @@ class SCTGetCenterlineInputSpec(CommandLineInputSpec):
 class SCTGetCenterlineOutputSpec(TraitedSpec):
     centerline_file = File(exists=True, desc='Output CSV')
 
+#TODO: Save in correct dir
 class SCTGetCenterline(CommandLine):
     input_spec = SCTGetCenterlineInputSpec
     output_spec = SCTGetCenterlineOutputSpec
@@ -231,3 +232,20 @@ class SCTGetCenterline(CommandLine):
         #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
         return outputs
 
+class SCTStraightenSpinalcordInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    segmentation_image = File(exists=True, desc='Input spine image', argstr='-s %s', mandatory=True)
+
+class SCTStraightenSpinalcordOutputSpec(TraitedSpec):
+    straightened_input = File(exists=True, desc='Output CSV')
+
+class SCTStraightenSpinalcord(CommandLine):
+    input_spec = SCTStraightenSpinalcordInputSpec
+    output_spec = SCTStraightenSpinalcordOutputSpec
+    _cmd = 'sct_get_centerline'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['centerline_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_straight.nii.gz')
+        #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
+        return outputs

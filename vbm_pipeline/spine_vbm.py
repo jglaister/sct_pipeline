@@ -74,11 +74,11 @@ def create_spine_template_workflow(output_root):
     wf.connect(input_node, 'spine_files', label_vertebrae, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', label_vertebrae, 'spine_segmentation')
 
-    get_centerline = pe.MapNode(interface=sct.SCTGetCenterline(),
-                                iterfield=['input_image'],
-                                name='get_centerline')
-    get_centerline.inputs.contrast = 't2'
-    wf.connect(input_node, 'spine_files', get_centerline, 'input_image')
+    straighten_spinalcord = pe.MapNode(interface=sct.SCTStraightenSpinalcord(),
+                                iterfield=['input_image','segmentation_image'],
+                                name='straighten_spinalcord')
+    wf.connect(input_node, 'spine_files', straighten_spinalcord, 'input_image')
+    wf.connect(spine_segmentation, 'spine_segmentation', straighten_spinalcord, 'spine_segmentation')
 
 
     # TODO: Add automatic selection of initial template
