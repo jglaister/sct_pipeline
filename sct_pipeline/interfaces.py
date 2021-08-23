@@ -211,3 +211,23 @@ class SCTRegisterMultimodal(CommandLine):
         else:
             outputs['output_file'] = os.path.abspath('csa.csv')
         return outputs
+
+class SCTGetCenterlineInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    contrast = traits.Enum('t1', 't2', 't2s', 'dwi', desc='Input image contrast type', argstr='-c %s')
+    #output_filename = traits.Str(desc='Output filename', argstr='-o %s')
+
+class SCTGetCenterlineOutputSpec(TraitedSpec):
+    centerline_file = File(exists=True, desc='Output CSV')
+
+class SCTGetCenterline(CommandLine):
+    input_spec = SCTRegisterMultimodalInputSpec
+    output_spec = SCTRegisterMultimodalOutputSpec
+    _cmd = 'sct_get_centerline'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['centerline_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_centerline.nii.gz')
+        #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
+        return outputs
+
