@@ -1,12 +1,12 @@
-import os, glob  # system functions
+import os  # system functions
 
-import nipype.interfaces.io as nio
-import nipype.interfaces.fsl as fsl
 import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
 import nipype.interfaces.base as base
 
-import sct_pipeline.interfaces as sct
+import sct_pipeline.interfaces.registration as sct_reg
+import sct_pipeline.interfaces.segmentation as sct_seg
+import sct_pipeline.interfaces.util as sct_util
 
 
 class GenerateTemplateInputSpec(base.BaseInterfaceInputSpec):
@@ -53,7 +53,7 @@ class GenerateTemplate(base.BaseInterface):
         return outputs
 
 
-def create_spine_template_workflow(output_root):
+def create_spine_template_workflow(output_root, template_index=0):
     # TODO: Split into seperate workflows
     wf = pe.Workflow(name='spine_template', base_dir=os.path.join(output_root, 'spine_template'))
 
@@ -61,42 +61,69 @@ def create_spine_template_workflow(output_root):
         interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
         name='input_node')
 
-    spine_segmentation = pe.MapNode(interface=sct.SCTDeepSeg(),
+    spine_segmentation = pe.MapNode(interface=sct_seg.SCTDeepSeg(),
                                     iterfield=['input_image'],
                                     name='spine_segmentation')
     spine_segmentation.inputs.contrast = 't2'
     wf.connect(input_node, 'spine_files', spine_segmentation, 'input_image')
 
-    label_vertebrae = pe.MapNode(interface=sct.SCTLabelVertebrae(),
+    label_vertebrae = pe.MapNode(interface=sct_seg.SCTLabelVertebrae(),
                                  iterfield=['input_image', 'spine_segmentation'],
                                  name='label_vertebrae')
     label_vertebrae.inputs.contrast = 't2'
     wf.connect(input_node, 'spine_files', label_vertebrae, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', label_vertebrae, 'spine_segmentation')
 
-    straighten_spinalcord = pe.MapNode(interface=sct.SCTStraightenSpinalcord(),
-                                iterfield=['input_image','segmentation_image'],
-                                name='straighten_spinalcord')
+    # Straighten the spinalcord, then apply the warp field to the segmentation and label maps
+    straighten_spinalcord = pe.MapNode(interface=sct_reg.SCTStraightenSpinalcord(),
+                                       iterfield=['input_image','segmentation_image'],
+                                       name='straighten_spinalcord')
     wf.connect(input_node, 'spine_files', straighten_spinalcord, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', straighten_spinalcord, 'segmentation_image')
 
-    straighten_segmentation = pe.MapNode(interface=sct.SCTApplyTransform(),
+    straighten_segmentation = pe.MapNode(interface=sct_reg.SCTApplyTransform(),
                                          iterfield=['input_image', 'destination_image', 'transforms'],
                                          name='straighten_segmentation')
-    straighten_segmentation.inputs.interpolation = 'linear'
+    straighten_segmentation.inputs.interpolation = 'linear'  # Soft segmentation, so use linear
     wf.connect(spine_segmentation, 'spine_segmentation', straighten_segmentation, 'input_image')
     wf.connect(straighten_spinalcord, 'straightened_input', straighten_segmentation, 'destination_image')
     wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_segmentation, 'transforms')
 
-    straighten_labels = pe.MapNode(interface=sct.SCTApplyTransform(),
-                                         iterfield=['input_image', 'destination_image', 'transforms'],
-                                         name='straighten_labels')
-    straighten_labels.inputs.interpolation = 'nn'
+    straighten_labels = pe.MapNode(interface=sct_reg.SCTApplyTransform(),
+                                   iterfield=['input_image', 'destination_image', 'transforms'],
+                                   name='straighten_labels')
+    straighten_labels.inputs.interpolation = 'nn'  # Hard label segmentation, so use nn
     wf.connect(label_vertebrae, 'labels', straighten_labels, 'input_image')
     wf.connect(straighten_spinalcord, 'straightened_input', straighten_labels, 'destination_image')
     wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_labels, 'transforms')
 
-    # TODO: Add automatic selection of initial template
+    # Select the template_index element of the straightened spinalcord to use as the initial template
+    select_init_template = pe.Node(interface=util.Select(),
+                                   name='select_init_template')
+    select_init_template.inputs.index = [template_index]
+    wf.connect(straighten_spinalcord, 'straightened_input', select_init_template, 'inlist')
+
+    select_init_label = pe.Node(interface=util.Select(),
+                                name='select_init_label')
+    select_init_label.inputs.index = [template_index]
+    wf.connect(straighten_labels, 'output_file', select_init_label, 'inlist')
+
+    select_init_seg = pe.Node(interface=util.Select(),
+                              name='select_init_seg')
+    select_init_seg.inputs.index = [template_index]
+    wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
+
+    # TODO: Split here into a separate workflow
+    rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
+                                    iterfield=['input_image', 'input_label'],
+                                    name='rigid_registration')
+    rigid_registration.inputs.param = 'step=0,type=label,algo=rigid:step=1,type=im,algo=affine,metric=CC'
+    wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
+    wf.connect(straighten_labels, 'output_file', rigid_registration, 'input_label')
+    wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
+    wf.connect(select_init_label, 'out', rigid_registration, 'destination_label')
+
+
     #num_dataset = len(input_node.inputs.spine_files)
     #pick_first = pe.Node(util.Split(), 'pick_first')
     #pick_first.inputs.splits = [1, num_dataset-1]

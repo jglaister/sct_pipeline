@@ -2,7 +2,7 @@
 import argparse
 import os
 
-from vbm_pipeline.spine_vbm import create_spine_template_workflow
+from sct_pipeline.workflows.spine_vbm import create_spine_template_workflow
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -1,19 +1,9 @@
-import nipype
 import os  # system functions
-import shutil
 
-import nipype.interfaces.io as nio  # Data i/o
-import nipype.interfaces.utility as util  # utility
-import nipype.pipeline.engine as pe  # pypeline engine
+from nipype import Workflow, Node, IdentityInterface
 
-from nipype import Workflow, Node, MapNode, Function, IdentityInterface
-from nipype.interfaces.ants import Registration, AverageImages
-from nipype.interfaces.ants import N4BiasFieldCorrection, Registration, ApplyTransforms
-from nipype.interfaces.fsl import BET
-from nipype.interfaces.fsl import Smooth
+from sct_pipeline.interfaces.segmentation import SCTDeepSeg, SCTLabelVertebrae, SCTRegisterToTemplate
 
-from interfaces import SCTDeepSeg, SCTLabelVertebrae, SCTRegisterToTemplate
-from nipype.interfaces.ants import MultiplyImages
 
 class PipelineWorkflow(Workflow):
     def __init__(self, name, scan_directory, patient_id=None, scan_id=None):
