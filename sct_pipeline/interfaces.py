@@ -242,7 +242,7 @@ class SCTStraightenSpinalcordOutputSpec(TraitedSpec):
 class SCTStraightenSpinalcord(CommandLine):
     input_spec = SCTStraightenSpinalcordInputSpec
     output_spec = SCTStraightenSpinalcordOutputSpec
-    _cmd = 'sct_get_centerline'
+    _cmd = 'sct_straighten_spinalcord'
 
     def _list_outputs(self):
         outputs = self._outputs().get()
