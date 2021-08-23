@@ -91,7 +91,7 @@ def create_spine_template_workflow(output_root):
     straighten_labels = pe.MapNode(interface=sct.SCTApplyTransform(),
                                          iterfield=['input_image', 'destination_image', 'transforms'],
                                          name='straighten_labels')
-    straighten_labels.inputs.interpolation = 'label'
+    straighten_labels.inputs.interpolation = 'nn'
     wf.connect(label_vertebrae, 'labels', straighten_labels, 'input_image')
     wf.connect(straighten_spinalcord, 'straightened_input', straighten_labels, 'destination_image')
     wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_labels, 'transforms')
