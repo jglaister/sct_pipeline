@@ -221,8 +221,8 @@ class SCTGetCenterlineOutputSpec(TraitedSpec):
     centerline_file = File(exists=True, desc='Output CSV')
 
 class SCTGetCenterline(CommandLine):
-    input_spec = SCTRegisterMultimodalInputSpec
-    output_spec = SCTRegisterMultimodalOutputSpec
+    input_spec = SCTGetCenterlineInputSpec
+    output_spec = SCTGetCenterlineOutputSpec
     _cmd = 'sct_get_centerline'
 
     def _list_outputs(self):
