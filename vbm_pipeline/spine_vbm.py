@@ -6,7 +6,7 @@ import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
 import nipype.interfaces.base as base
 
-from sct_pipeline.interfaces import SCTRegisterMultimodal, SCTDeepSeg
+from sct_pipeline.interfaces import SCTRegisterMultimodal, SCTDeepSeg, SCTLabelVertebrae
 
 
 class GenerateTemplateInputSpec(base.BaseInterfaceInputSpec):
@@ -61,9 +61,18 @@ def create_spine_template_workflow(output_root):
         interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
         name='input_node')
 
-    spine_segmentation = pe.MapNode(interface=SCTDeepSeg(), iterfield=['input_image'], name='spine_segmentation')
+    spine_segmentation = pe.MapNode(interface=SCTDeepSeg(),
+                                    iterfield=['input_image'],
+                                    name='spine_segmentation')
     spine_segmentation.inputs.contrast = 't2'
     wf.connect(input_node, 'spine_files', spine_segmentation, 'input_image')
+
+    label_vertebrae = pe.MapNode(interface=SCTLabelVertebrae(),
+                                 iterfield=['input_image', 'spine_segmentation'],
+                                 name='label_vertebrae')
+    label_vertebrae.inputs.contrast = 't2'
+    wf.connect(input_node, 'spine_files', label_vertebrae, 'input_image')
+    wf.connect(spine_segmentation, 'spine_segmentation', label_vertebrae, 'spine_segmentation')
 
     # TODO: Add automatic selection of initial template
     #num_dataset = len(input_node.inputs.spine_files)
