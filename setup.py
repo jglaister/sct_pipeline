@@ -20,6 +20,6 @@ args = dict(
 )
 
 setup(install_requires=['nipype', 'numpy', 'nibabel'],
-      packages=['sct_pipeline', 'vbm_pipeline'],
+      packages=['sct_pipeline.interfaces', 'sct_pipeline.workflows'],
       scripts=glob('bin/*'), **args)
 
