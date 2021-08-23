@@ -117,8 +117,8 @@ class SCTLabelVertebraeOutputSpec(TraitedSpec):
 
 
 class SCTLabelVertebrae(CommandLine):
-    input_spec = SCTDeepSegInputSpec
-    output_spec = SCTDeepSegOutputSpec
+    input_spec = SCTLabelVertebraeInputSpec
+    output_spec = SCTLabelVertebraeOutputSpec
     _cmd = 'sct_label_vertebrae'
 
     def _list_outputs(self):
