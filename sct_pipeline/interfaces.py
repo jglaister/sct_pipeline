@@ -270,6 +270,6 @@ class SCTApplyTransform(CommandLine):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs['output_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_straight.nii.gz')
+        outputs['output_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_reg.nii.gz')
         #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
         return outputs
