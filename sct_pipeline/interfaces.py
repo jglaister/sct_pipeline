@@ -238,6 +238,8 @@ class SCTStraightenSpinalcordInputSpec(CommandLineInputSpec):
 
 class SCTStraightenSpinalcordOutputSpec(TraitedSpec):
     straightened_input = File(exists=True, desc='Output CSV')
+    warp_curve2straight = File(exists=True, desc='Output CSV')
+    warp_straight2curve = File(exists=True, desc='Output CSV')
 
 class SCTStraightenSpinalcord(CommandLine):
     input_spec = SCTStraightenSpinalcordInputSpec
@@ -246,6 +248,28 @@ class SCTStraightenSpinalcord(CommandLine):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs['centerline_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_straight.nii.gz')
+        outputs['straightened_input'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_straight.nii.gz')
+        outputs['warp_curve2straight'] = os.path.abspath('warp_curve2straight.nii.gz')
+        outputs['warp_straight2curve'] = os.path.abspath('warp_straight2curve.nii.gz')
+        #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
+        return outputs
+
+class SCTApplyTransformInputSpec(CommandLineInputSpec):
+    input_file = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    destination_file = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
+    transforms = File(exists=True, desc='Input spine image', argstr='-w %s', mandatory=True)
+    interpolation = traits.Enum('spline', 'linear', 'nn', 'label', desc='Input image contrast type', argstr='-x %s')
+
+class SCTApplyTransformOutputSpec(TraitedSpec):
+    output_file = File(exists=True, desc='Output CSV')
+
+class SCTApplyTransform(CommandLine):
+    input_spec = SCTApplyTransformInputSpec
+    output_spec = SCTApplyTransformOutputSpec
+    _cmd = 'sct_apply_transfo'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['output_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_straight.nii.gz')
         #split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
         return outputs

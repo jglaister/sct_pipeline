@@ -80,6 +80,21 @@ def create_spine_template_workflow(output_root):
     wf.connect(input_node, 'spine_files', straighten_spinalcord, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', straighten_spinalcord, 'segmentation_image')
 
+    straighten_segmentation = pe.MapNode(interface=sct.SCTApplyTransform(),
+                                         iterfield=['input_file', 'destination_file', 'transforms'],
+                                         name='straighten_segmentation')
+    straighten_segmentation.inputs.interpolation = 'linear'
+    wf.connect(spine_segmentation, 'spine_segmentation', straighten_spinalcord, 'input_image')
+    wf.connect(straighten_spinalcord, 'straighten_spinalcord', straighten_spinalcord, 'destination_file')
+    wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_spinalcord, 'transforms')
+
+    straighten_labels = pe.MapNode(interface=sct.SCTApplyTransform(),
+                                         iterfield=['input_file', 'destination_file', 'transforms'],
+                                         name='straighten_labels')
+    straighten_labels.inputs.interpolation = 'label'
+    wf.connect(label_vertebrae, 'labels', straighten_labels, 'input_image')
+    wf.connect(straighten_spinalcord, 'straighten_spinalcord', straighten_labels, 'destination_file')
+    wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_labels, 'transforms')
 
     # TODO: Add automatic selection of initial template
     #num_dataset = len(input_node.inputs.spine_files)
