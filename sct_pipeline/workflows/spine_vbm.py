@@ -53,6 +53,10 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(straighten_spinalcord, 'straightened_input', straighten_labels, 'destination_image')
     wf.connect(straighten_spinalcord, 'warp_curve2straight', straighten_labels, 'transforms')
 
+    # TODO: Split here into a separate workflow
+    threshold_labels = pe.Node(sct_util.ThresholdLabels(), name='threshold_labels')
+    wf.connect(straighten_labels, 'output_file', threshold_labels, 'label_files')
+
     # Select the template_index element of the straightened spinalcord to use as the initial template
     select_init_template = pe.Node(interface=util.Select(),
                                    name='select_init_template')
@@ -62,16 +66,12 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_label = pe.Node(interface=util.Select(),
                                 name='select_init_label')
     select_init_label.inputs.index = [template_index]
-    wf.connect(straighten_labels, 'output_file', select_init_label, 'inlist')
+    wf.connect(threshold_labels, 'thresholded_label_files', select_init_label, 'inlist')
 
     select_init_seg = pe.Node(interface=util.Select(),
                               name='select_init_seg')
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
-
-    # TODO: Split here into a separate workflow
-    threshold_labels = pe.Node(sct_util.ThresholdLabels(), name='threshold_labels')
-    wf.connect(straighten_labels, 'output_file', threshold_labels, 'label_files')
 
     rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                     iterfield=['input_image', 'input_label'],
