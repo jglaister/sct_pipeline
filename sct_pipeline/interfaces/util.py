@@ -129,13 +129,10 @@ class ThresholdLabels(BaseInterface):
         import nibabel as nib
         import numpy as np
 
-        vol_obj = nib.load(self.inputs.input_file)
-        vol_data = vol_obj.get_fdata()
-
         vol_list = []
         header_list = []
         affine_list = []
-        max_common_label = np.infty
+        max_common_label = np.inf
 
         for f in self.inputs.label_files:
             vol_obj = nib.load(f)
