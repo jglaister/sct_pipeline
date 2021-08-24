@@ -122,8 +122,8 @@ class ThresholdLabelsOutputSpec(TraitedSpec):
 
 
 class ThresholdLabels(BaseInterface):
-    input_spec = ThresholdLabelsOutputSpec
-    output_spec = GenerateTemplateOutputSpec
+    input_spec = ThresholdLabelsInputSpec
+    output_spec = ThresholdLabelsOutputSpec
 
     def _run_interface(self, runtime):
         import nibabel as nib
