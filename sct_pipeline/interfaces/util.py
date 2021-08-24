@@ -157,6 +157,6 @@ class ThresholdLabels(BaseInterface):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs['template_file'] = [os.path.abspath(split_filename(f)[1] + '_thresh.nii.gz') for f in self.inputs.label_files]
+        outputs['thresholded_label_files'] = [os.path.abspath(split_filename(f)[1] + '_thresh.nii.gz') for f in self.inputs.label_files]
 
         return outputs
