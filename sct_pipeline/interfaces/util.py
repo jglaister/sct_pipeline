@@ -64,7 +64,7 @@ class GenerateTemplate(BaseInterface):
 
 class MeanInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
-    dimesion = traits.Enum('t','x','y','dwi', desc='Dimension to take mean over', argstr='-mean %s', mandatory=True)
+    dimension = traits.Enum('t','x','y','dwi', desc='Dimension to take mean over', argstr='-mean %s', mandatory=True)
     output_file = File(desc='output filename', argstr='-o %s')
 
 
@@ -110,4 +110,56 @@ class ProcessSeg(CommandLine):
             outputs['output_csv'] = os.path.abspath(self.inputs.output_filename)
         else:
             outputs['output_csv'] = os.path.abspath('csa.csv')
+        return outputs
+
+
+class ThresholdLabelsInputSpec(BaseInterfaceInputSpec):
+    label_files = traits.List(File(exists=True), desc='input image', mandatory=True)
+
+
+class ThresholdLabelsOutputSpec(TraitedSpec):
+    thresholded_label_files = traits.List(File(exists=True), desc='output template')
+
+
+class ThresholdLabels(BaseInterface):
+    input_spec = ThresholdLabelsOutputSpec
+    output_spec = GenerateTemplateOutputSpec
+
+    def _run_interface(self, runtime):
+        import nibabel as nib
+        import numpy as np
+
+        vol_obj = nib.load(self.inputs.input_file)
+        vol_data = vol_obj.get_fdata()
+
+        vol_list = []
+        header_list = []
+        affine_list = []
+        max_common_label = np.infty
+
+        for f in self.inputs.label_files:
+            vol_obj = nib.load(f)
+            vol_data = vol_obj.get_fdata()
+            vol_list.append(vol_data)
+            header_list.append(vol_obj.header)
+            affine_list.append(vol_obj.affine)
+
+            max_label = np.max(vol_data)
+            if max_label < max_common_label:
+                max_common_label = max_label
+
+        for idx, f in enumerate(self.inputs.label_files):
+            vol_data = vol_list[idx]
+            vol_data[vol_data>max_common_label] = 0
+            vol_obj = nib.Nifti1Image(vol_data, affine_list[idx], header_list[idx])
+
+            output_name = split_filename(f)[1] + '_thresh.nii.gz'
+            vol_obj.to_filename(output_name)
+
+        return runtime
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['template_file'] = [os.path.abspath(split_filename(f)[1] + '_thresh.nii.gz') for f in self.inputs.label_files]
+
         return outputs

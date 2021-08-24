@@ -9,10 +9,7 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 
 
-
-
-
-def create_spine_template_workflow(output_root, template_index=0):
+def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     # TODO: Split into seperate workflows
     wf = pe.Workflow(name='spine_template', base_dir=os.path.join(output_root, 'spine_template'))
 
@@ -73,12 +70,15 @@ def create_spine_template_workflow(output_root, template_index=0):
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
     # TODO: Split here into a separate workflow
+    threshold_labels = pe.Node(sct_util.ThresholdLabels(), name='threshold_labels')
+    wf.connect(straighten_labels, 'output_file', threshold_labels, 'label_files')
+
     rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                     iterfield=['input_image', 'input_label'],
                                     name='rigid_registration')
     rigid_registration.inputs.param = 'step=0,type=label,algo=rigid:step=1,type=im,algo=affine,metric=CC'
     wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
-    wf.connect(straighten_labels, 'output_file', rigid_registration, 'input_label')
+    wf.connect(straighten_labels, 'thresholded_label_files', rigid_registration, 'input_label')
     wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
     wf.connect(select_init_label, 'out', rigid_registration, 'destination_label')
 
