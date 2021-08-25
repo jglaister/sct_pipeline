@@ -114,11 +114,12 @@ class ProcessSeg(CommandLine):
 
 
 class ThresholdLabelsInputSpec(BaseInterfaceInputSpec):
-    label_files = traits.List(File(exists=True), desc='input image', mandatory=True)
+    label_files = traits.List(File(exists=True), desc='Vertebrae label image', mandatory=True)
+    threshold = traits.Bool(default_value=False, desc='If true, threshold to a binary mask.')
 
 
 class ThresholdLabelsOutputSpec(TraitedSpec):
-    thresholded_label_files = traits.List(File(exists=True), desc='output template')
+    thresholded_label_files = traits.List(File(exists=True), desc='Output labels')
 
 
 class ThresholdLabels(BaseInterface):
@@ -147,7 +148,9 @@ class ThresholdLabels(BaseInterface):
 
         for idx, f in enumerate(self.inputs.label_files):
             vol_data = vol_list[idx]
-            vol_data[vol_data>max_common_label] = 0
+            vol_data[vol_data > max_common_label] = 0
+            if self.inputs.threshold is True:
+                vol_data[vol_data > 0] = 1
             vol_obj = nib.Nifti1Image(vol_data, affine_list[idx], header_list[idx])
 
             output_name = split_filename(f)[1] + '_thresh.nii.gz'
