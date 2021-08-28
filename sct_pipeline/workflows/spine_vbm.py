@@ -56,6 +56,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     # TODO: Split here into a separate workflow
     threshold_labels = pe.Node(sct_util.ThresholdLabels(), name='threshold_labels')
     threshold_labels.inputs.threshold = True
+    threshold_labels.inputs.num_additional_labels_removed = 1
     wf.connect(straighten_labels, 'output_file', threshold_labels, 'label_files')
 
     # Select the template_index element of the straightened spinalcord to use as the initial template
@@ -74,14 +75,14 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
-    #rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-    #                                iterfield=['input_image', 'input_label'],
-    #                                name='rigid_registration')
-    #rigid_registration.inputs.param = 'step=1,type=label,algo=rigid:step=1,type=im,algo=affine,metric=CC'
-    #wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
-    #wf.connect(threshold_labels, 'thresholded_label_files', rigid_registration, 'input_label')
-    #wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
-    #wf.connect(select_init_label, 'out', rigid_registration, 'destination_label')
+    rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
+                                    iterfield=['input_image', 'input_label'],
+                                    name='rigid_registration')
+    rigid_registration.inputs.param = 'step=1,type=seg,algo=rigid:step=1,type=im,algo=affine,metric=CC'
+    wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
+    wf.connect(threshold_labels, 'thresholded_label_files', rigid_registration, 'input_label')
+    wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
+    wf.connect(select_init_label, 'out', rigid_registration, 'destination_label')
 
 
     #num_dataset = len(input_node.inputs.spine_files)

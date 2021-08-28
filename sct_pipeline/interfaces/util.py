@@ -116,6 +116,9 @@ class ProcessSeg(CommandLine):
 class ThresholdLabelsInputSpec(BaseInterfaceInputSpec):
     label_files = traits.List(File(exists=True), desc='Vertebrae label image', mandatory=True)
     threshold = traits.Bool(default_value=False, desc='If true, threshold to a binary mask.')
+    num_additional_labels_removed = traits.Int(default_value=0, desc='Number of additional labels to remove. '
+                                                                     'If set to 1, this will remove an additional '
+                                                                     'label.')
 
 
 class ThresholdLabelsOutputSpec(TraitedSpec):
@@ -145,6 +148,8 @@ class ThresholdLabels(BaseInterface):
             max_label = np.max(vol_data)
             if max_label < max_common_label:
                 max_common_label = max_label
+
+        max_common_label = max_common_label - self.inputs.num_additional_labels_removed
 
         for idx, f in enumerate(self.inputs.label_files):
             vol_data = vol_list[idx]
