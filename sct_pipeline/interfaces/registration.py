@@ -77,9 +77,9 @@ class RegisterMultimodal(CommandLine):
         outputs['warped_input_image'] = os.path.abspath(input_image_base + '_reg.nii.gz')
         outputs['warped_destination_image'] = os.path.abspath(destination_image_base + '_reg.nii.gz')
         outputs['warpfield_input_to_destination'] = os.path.abspath(
-            'warp' + input_image_base + '2' + destination_image_base + '.nii.gz')
+            'warp_' + input_image_base + '2' + destination_image_base + '.nii.gz')
         outputs['warpfield_destination_to_input'] = os.path.abspath(
-            'warp' + destination_image_base + '2' + input_image_base + '.nii.gz')
+            'warp_' + destination_image_base + '2' + input_image_base + '.nii.gz')
 
         return outputs
 
