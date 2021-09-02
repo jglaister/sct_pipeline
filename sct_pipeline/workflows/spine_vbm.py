@@ -80,9 +80,9 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
                                     name='rigid_registration')
     rigid_registration.inputs.param = 'step=1,type=seg,algo=rigid:step=1,type=im,algo=affine,metric=CC'
     wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
-    wf.connect(threshold_labels, 'thresholded_label_files', rigid_registration, 'input_label')
+    wf.connect(threshold_labels, 'thresholded_label_files', rigid_registration, 'input_segmentation')
     wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
-    wf.connect(select_init_label, 'out', rigid_registration, 'destination_label')
+    wf.connect(select_init_label, 'out', rigid_registration, 'destination_segmentation')
 
 
     #num_dataset = len(input_node.inputs.spine_files)

@@ -59,8 +59,10 @@ class RegisterMultimodalInputSpec(CommandLineInputSpec):
 
 
 class RegisterMultimodalOutputSpec(TraitedSpec):
-    output_file = File(exists=True, desc='Output CSV')
-    output_warp = File(exists=True, desc='Output CSV')
+    warped_input_image = File(exists=True, desc='Output CSV')
+    warped_destination_image = File(exists=True, desc='Output CSV')
+    warpfield_input_to_destination = File(exists=True, desc='Output CSV')
+    warpfield_destination_to_input = File(exists=True, desc='Output CSV')
 
 
 class RegisterMultimodal(CommandLine):
@@ -70,10 +72,15 @@ class RegisterMultimodal(CommandLine):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        if isdefined(self.inputs.output_filename):
-            outputs['output_file'] = os.path.abspath(self.inputs.output_filename)
-        else:
-            outputs['output_file'] = os.path.abspath('csa.csv')
+        input_image_base = split_filename(self.inputs.input_image)[1]
+        destination_image_base = split_filename(self.inputs.destination_image)[1]
+        outputs['warped_input_image'] = os.path.abspath(input_image_base + '_reg.nii.gz')
+        outputs['warped_destination_image'] = os.path.abspath(destination_image_base + '_reg.nii.gz')
+        outputs['warpfield_input_to_destination'] = os.path.abspath(
+            'warp' + input_image_base + '2' + destination_image_base + '.nii.gz')
+        outputs['warpfield_destination_to_input'] = os.path.abspath(
+            'warp' + destination_image_base + '2' + input_image_base + '.nii.gz')
+
         return outputs
 
 
