@@ -76,7 +76,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
     rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-                                    iterfield=['input_image', 'input_label'],
+                                    iterfield=['input_image', 'input_segmentation'],
                                     name='rigid_registration')
     rigid_registration.inputs.param = 'step=1,type=seg,algo=rigid:step=1,type=im,algo=affine,metric=CC'
     wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
