@@ -115,7 +115,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(affine_registration, 'warped_input_image', affine_4d_template, 'in_files')
 
     nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-                                     iterfield=['input_image', 'input_segmentation'],
+                                     iterfield=['input_image'],
                                      name='nonlinear_registration')
     nonlinear_registration.inputs.param = 'step=0,type=im,algo=affine,deformation=1x1x1,iter=100:' \
                                           'step=1,type=im,algo=affine,deformation=1x1x1,iter=100,metric=MI:' \
