@@ -13,7 +13,7 @@ import sct_pipeline.interfaces.util as sct_util
 
 def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     # TODO: Split into seperate workflows
-    wf = pe.Workflow(name='spine_template', base_dir=os.path.join(output_root, 'spine_template'))
+    wf = pe.Workflow(name='spine_template', base_dir=output_root)
 
     input_node = pe.Node(
         interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
