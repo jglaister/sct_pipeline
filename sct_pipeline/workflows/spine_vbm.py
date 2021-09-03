@@ -2,7 +2,9 @@ import os  # system functions
 
 import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
+import nipype.interfaces.ants as ants
 import nipype.interfaces.base as base
+import nipype.interfaces.fsl as fsl
 
 import sct_pipeline.interfaces.registration as sct_reg
 import sct_pipeline.interfaces.segmentation as sct_seg
@@ -75,15 +77,58 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
-    rigid_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-                                    iterfield=['input_image', 'input_segmentation'],
-                                    name='rigid_registration')
-    rigid_registration.inputs.param = 'step=1,type=seg,algo=rigid:step=1,type=im,algo=affine,metric=CC'
-    wf.connect(straighten_spinalcord, 'straightened_input', rigid_registration, 'input_image')
-    wf.connect(threshold_labels, 'thresholded_label_files', rigid_registration, 'input_segmentation')
-    wf.connect(select_init_template, 'out', rigid_registration, 'destination_image')
-    wf.connect(select_init_label, 'out', rigid_registration, 'destination_segmentation')
+    # affine_reg_to_gm = pe.MapNode(ants.Registration(), iterfield=['moving_image'], name='affine_reg_to_GM')
+    # affine_reg_to_gm.inputs.dimension = 3
+    # affine_reg_to_gm.inputs.interpolation = 'Linear'
+    # affine_reg_to_gm.inputs.metric = ['MI', 'MI']
+    # affine_reg_to_gm.inputs.metric_weight = [1.0, 1.0]
+    # affine_reg_to_gm.inputs.radius_or_number_of_bins = [32, 32]
+    # affine_reg_to_gm.inputs.sampling_strategy = ['Regular', 'Regular']
+    # affine_reg_to_gm.inputs.sampling_percentage = [0.25, 0.25]
+    # affine_reg_to_gm.inputs.transforms = ['Rigid', 'Affine']
+    # affine_reg_to_gm.inputs.transform_parameters = [(0.1,), (0.1,)]
+    # affine_reg_to_gm.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25]]
+    # affine_reg_to_gm.inputs.convergence_threshold = [1e-6, 1e-6]
+    # affine_reg_to_gm.inputs.convergence_window_size = [10, 10]
+    # affine_reg_to_gm.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1]]
+    # affine_reg_to_gm.inputs.sigma_units = ['vox', 'vox']
+    # affine_reg_to_gm.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1]]
+    # affine_reg_to_gm.inputs.write_composite_transform = True
+    # affine_reg_to_gm.inputs.initial_moving_transform_com = 1
+    # affine_reg_to_gm.inputs.output_warped_image = True
+    # wf.connect(split_priors, 'out2', affine_reg_to_gm, 'moving_image')
+    # wf.connect(input_node, 'GM_template', affine_reg_to_gm, 'fixed_image')
 
+    affine_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
+                                    iterfield=['input_image', 'input_segmentation'],
+                                    name='affine_registration')
+    affine_registration.inputs.param = 'step=0,type=seg,algo=affine,deformation=1x1x1,iter=100:' \
+                                       'step=1,type=im,algo=affine,deformation=1x1x1,iter=100,metric=MI'
+    wf.connect(straighten_spinalcord, 'straightened_input', affine_registration, 'input_image')
+    wf.connect(threshold_labels, 'thresholded_label_files', affine_registration, 'input_segmentation')
+    wf.connect(select_init_template, 'out', affine_registration, 'destination_image')
+    wf.connect(select_init_label, 'out', affine_registration, 'destination_segmentation')
+
+    affine_4d_template = pe.Node(interface=fsl.Merge(),
+                                name='affine_4d_template')
+    affine_4d_template.inputs.dimension = 't'
+    wf.connect(affine_registration, 'warped_input_image', affine_4d_template, 'in_files')
+
+    nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
+                                     iterfield=['input_image', 'input_segmentation'],
+                                     name='nonlinear_registration')
+    nonlinear_registration.inputs.param = 'step=0,type=im,algo=affine,deformation=1x1x1,iter=100:' \
+                                          'step=1,type=im,algo=affine,deformation=1x1x1,iter=100,metric=MI:' \
+                                          'step=2,type=im,algo=syn,deformation=1x1x1,iter=10,metric=MI '
+    wf.connect(straighten_spinalcord, 'straightened_input', nonlinear_registration, 'input_image')
+    #wf.connect(threshold_labels, 'thresholded_label_files', nonlinear_registration, 'input_segmentation')
+    wf.connect(affine_4d_template, 'merged_file', nonlinear_registration, 'destination_image')
+    #wf.connect(select_init_label, 'out', nonlinear_registration, 'destination_segmentation')
+
+    nonlinear_4d_template = pe.Node(interface=fsl.Merge(),
+                                    name='nonlinear_4d_template')
+    nonlinear_4d_template.inputs.dimension = 't'
+    wf.connect(nonlinear_registration, 'warped_input_image', nonlinear_4d_template, 'in_files')
 
     #num_dataset = len(input_node.inputs.spine_files)
     #pick_first = pe.Node(util.Split(), 'pick_first')
