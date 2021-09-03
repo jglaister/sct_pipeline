@@ -114,6 +114,10 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_4d_template.inputs.dimension = 't'
     wf.connect(affine_registration, 'warped_input_image', affine_4d_template, 'in_files')
 
+    affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
+                              name='affine_template')
+    wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
+
     nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                      iterfield=['input_image'],
                                      name='nonlinear_registration')
@@ -122,13 +126,17 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
                                           'step=2,type=im,algo=syn,deformation=1x1x1,iter=10,metric=MI '
     wf.connect(straighten_spinalcord, 'straightened_input', nonlinear_registration, 'input_image')
     #wf.connect(threshold_labels, 'thresholded_label_files', nonlinear_registration, 'input_segmentation')
-    wf.connect(affine_4d_template, 'merged_file', nonlinear_registration, 'destination_image')
+    wf.connect(affine_template, 'template_file', nonlinear_registration, 'destination_image')
     #wf.connect(select_init_label, 'out', nonlinear_registration, 'destination_segmentation')
 
     nonlinear_4d_template = pe.Node(interface=fsl.Merge(),
                                     name='nonlinear_4d_template')
     nonlinear_4d_template.inputs.dimension = 't'
     wf.connect(nonlinear_registration, 'warped_input_image', nonlinear_4d_template, 'in_files')
+
+    nonlinear_template = pe.Node(interface=sct_util.GenerateTemplate(),
+                              name='nonlinear_template')
+    wf.connect(nonlinear_4d_template, 'merged_file', nonlinear_template, 'input_file')
 
     #num_dataset = len(input_node.inputs.spine_files)
     #pick_first = pe.Node(util.Split(), 'pick_first')
