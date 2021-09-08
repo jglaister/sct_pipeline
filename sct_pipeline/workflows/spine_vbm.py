@@ -112,8 +112,8 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_registration.inputs.write_composite_transform = True
     affine_registration.inputs.initial_moving_transform_com = 1
     affine_registration.inputs.output_warped_image = True
-    wf.connect(merge_moving_images, 'out', affine_registration, 'fixed_image')
-    wf.connect(merge_fixed_images, 'out', affine_registration, 'moving_image')
+    wf.connect(merge_moving_images, 'out', affine_registration, 'moving_image')
+    wf.connect(merge_fixed_images, 'out', affine_registration, 'fixed_image')
     
     '''
     affine_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
