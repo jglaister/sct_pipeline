@@ -114,18 +114,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_registration.inputs.output_warped_image = True
     wf.connect(merge_moving_images, 'out', affine_registration, 'moving_image')
     wf.connect(merge_fixed_images, 'out', affine_registration, 'fixed_image')
-    
-    '''
-    affine_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-                                    iterfield=['input_image', 'input_segmentation'],
-                                    name='affine_registration')
-    affine_registration.inputs.param = 'step=0,type=seg,algo=affine,deformation=1x1x1,iter=100:' \
-                                       'step=1,type=im,algo=affine,deformation=1x1x1,iter=100,metric=MI'
-    wf.connect(straighten_spinalcord, 'straightened_input', affine_registration, 'input_image')
-    wf.connect(threshold_labels, 'thresholded_label_files', affine_registration, 'input_segmentation')
-    wf.connect(select_init_template, 'out', affine_registration, 'destination_image')
-    wf.connect(select_init_label, 'out', affine_registration, 'destination_segmentation')
-    '''
+
     affine_4d_template = pe.Node(interface=fsl.Merge(),
                                 name='affine_4d_template')
     affine_4d_template.inputs.dimension = 't'
@@ -134,6 +123,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
                               name='affine_template')
     wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
+    
     '''
     # apply_affine_transform = pe.MapNode(interface=sct_reg.ApplyTransform(),
     #                                     iterfield=['input_image'],
@@ -141,7 +131,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
     # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
     # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
-    '''
+    
     nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                      iterfield=['input_image'],
                                      name='nonlinear_registration')
