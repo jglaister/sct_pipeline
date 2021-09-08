@@ -77,8 +77,45 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
-
-
+    
+    merge_moving_images = pe.MapNode(iterface=util.Merge(3), 
+                                     iterfield=['in1', 'in2', 'in3'],
+                                     name='merge_moving_images')
+    wf.connect(straighten_spinalcord, 'straightened_input', merge_moving_images, 'in1')
+    wf.connect(straighten_segmentation, 'output_file', merge_moving_images, 'in2')
+    wf.connect(threshold_labels, 'thresholded_label_files', merge_moving_images, 'in3')
+    
+    merge_fixed_images = pe.Node(iterface=util.Merge(3), 
+                                 name='merge_fixed_images')
+    wf.connect(select_init_template, 'out', merge_fixed_images, 'in1')
+    wf.connect(select_init_seg, 'out', merge_fixed_images, 'in2')
+    wf.connect(select_init_label, 'out', merge_fixed_images, 'in3')
+    
+    affine_registration = pe.MapNode(interface=ants.Registration(),
+                                     iterfield=['moving_image'],
+                                     name='affine_registration')
+    affine_registration.inputs.dimension=3
+    affine_registration.inputs.interpolation = 'Linear'
+    affine_registration.inputs.metric = [['MI', 'MeanSquares', 'MeanSquares'], ['MI', 'MeanSquares', 'MeanSquares']]
+    affine_registration.inputs.metric_weight = [[0.4, 0.3, 0.3], [0.4, 0.3, 0.3]]
+    affine_registration.inputs.radius_or_number_of_bins = [[32, 5, 5], [32, 5, 5]]
+    affine_registration.inputs.sampling_strategy = ['Regular', 'Regular']
+    affine_registration.inputs.sampling_percentage = [0.25, 0.25]
+    affine_registration.inputs.transforms = ['Rigid', 'Affine']
+    affine_registration.inputs.transform_parameters = [(0.1,), (0.1,)]
+    affine_registration.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25]]
+    affine_registration.inputs.convergence_threshold = [1e-6, 1e-6]
+    affine_registration.inputs.convergence_window_size = [10, 10]
+    affine_registration.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1]]
+    affine_registration.inputs.sigma_units = ['vox', 'vox']
+    affine_registration.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1]]
+    affine_registration.inputs.write_composite_transform = True
+    affine_registration.inputs.initial_moving_transform_com = 1
+    affine_registration.inputs.output_warped_image = True
+    wf.connect(merge_moving_images, 'out', affine_registration, 'fixed_image')
+    wf.connect(merge_fixed_images, 'out', affine_registration, 'moving_image')
+    
+    '''
     affine_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                     iterfield=['input_image', 'input_segmentation'],
                                     name='affine_registration')
@@ -97,7 +134,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
                               name='affine_template')
     wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
-
+    '''
     # apply_affine_transform = pe.MapNode(interface=sct_reg.ApplyTransform(),
     #                                     iterfield=['input_image'],
     #                                     name='apply_affine_transform')
