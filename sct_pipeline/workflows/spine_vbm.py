@@ -125,11 +125,11 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(threshold_labels, 'thresholded_label_files', affine_registration, 'input_segmentation')
     wf.connect(select_init_template, 'out', affine_registration, 'destination_image')
     wf.connect(select_init_label, 'out', affine_registration, 'destination_segmentation')
-
+    '''
     affine_4d_template = pe.Node(interface=fsl.Merge(),
                                 name='affine_4d_template')
     affine_4d_template.inputs.dimension = 't'
-    wf.connect(affine_registration, 'warped_input_image', affine_4d_template, 'in_files')
+    wf.connect(affine_registration, 'warped_image', affine_4d_template, 'in_files')
 
     affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
                               name='affine_template')
