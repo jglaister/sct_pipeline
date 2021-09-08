@@ -77,27 +77,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
-    # affine_reg_to_gm = pe.MapNode(ants.Registration(), iterfield=['moving_image'], name='affine_reg_to_GM')
-    # affine_reg_to_gm.inputs.dimension = 3
-    # affine_reg_to_gm.inputs.interpolation = 'Linear'
-    # affine_reg_to_gm.inputs.metric = ['MI', 'MI']
-    # affine_reg_to_gm.inputs.metric_weight = [1.0, 1.0]
-    # affine_reg_to_gm.inputs.radius_or_number_of_bins = [32, 32]
-    # affine_reg_to_gm.inputs.sampling_strategy = ['Regular', 'Regular']
-    # affine_reg_to_gm.inputs.sampling_percentage = [0.25, 0.25]
-    # affine_reg_to_gm.inputs.transforms = ['Rigid', 'Affine']
-    # affine_reg_to_gm.inputs.transform_parameters = [(0.1,), (0.1,)]
-    # affine_reg_to_gm.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25]]
-    # affine_reg_to_gm.inputs.convergence_threshold = [1e-6, 1e-6]
-    # affine_reg_to_gm.inputs.convergence_window_size = [10, 10]
-    # affine_reg_to_gm.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1]]
-    # affine_reg_to_gm.inputs.sigma_units = ['vox', 'vox']
-    # affine_reg_to_gm.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1]]
-    # affine_reg_to_gm.inputs.write_composite_transform = True
-    # affine_reg_to_gm.inputs.initial_moving_transform_com = 1
-    # affine_reg_to_gm.inputs.output_warped_image = True
-    # wf.connect(split_priors, 'out2', affine_reg_to_gm, 'moving_image')
-    # wf.connect(input_node, 'GM_template', affine_reg_to_gm, 'fixed_image')
+
 
     affine_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                     iterfield=['input_image', 'input_segmentation'],
@@ -117,6 +97,13 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
                               name='affine_template')
     wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
+
+    # apply_affine_transform = pe.MapNode(interface=sct_reg.ApplyTransform(),
+    #                                     iterfield=['input_image'],
+    #                                     name='apply_affine_transform')
+    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
+    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
+    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
 
     nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
                                      iterfield=['input_image'],
