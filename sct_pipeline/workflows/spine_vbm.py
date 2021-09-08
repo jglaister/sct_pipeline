@@ -85,7 +85,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(straighten_segmentation, 'output_file', merge_moving_images, 'in2')
     wf.connect(threshold_labels, 'thresholded_label_files', merge_moving_images, 'in3')
     
-    merge_fixed_images = pe.Node(iterface=util.Merge(3), 
+    merge_fixed_images = pe.Node(interface=util.Merge(3), 
                                  name='merge_fixed_images')
     wf.connect(select_init_template, 'out', merge_fixed_images, 'in1')
     wf.connect(select_init_seg, 'out', merge_fixed_images, 'in2')
