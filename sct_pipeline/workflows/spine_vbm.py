@@ -78,7 +78,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
     
-    merge_moving_images = pe.MapNode(iterface=util.Merge(3), 
+    merge_moving_images = pe.MapNode(interface=util.Merge(3), 
                                      iterfield=['in1', 'in2', 'in3'],
                                      name='merge_moving_images')
     wf.connect(straighten_spinalcord, 'straightened_input', merge_moving_images, 'in1')
