@@ -1,6 +1,8 @@
 import os
-from nipype.interfaces.base import CommandLine, CommandLineInputSpec, TraitedSpec, File, traits, isdefined, Directory
+from nipype.interfaces.base import CommandLine, CommandLineInputSpec, TraitedSpec, File, traits, isdefined, Directory, InputMultiPath
 from nipype.utils.filemanip import split_filename
+
+from nipype.interfaces.ants.base import ANTSCommand, ANTSCommandInputSpec
 
 '''
 sct_maths
@@ -102,4 +104,49 @@ class LabelVertebrae(CommandLine):
             outputs['labels'] = os.path.abspath(os.path.join(self.inputs.output_directory, outfile))
         else:
             outputs['labels'] = os.path.abspath(outfile)
+        return outputs
+
+
+class LabelFusionInputSpec(ANTSCommandInputSpec):
+    dimension = traits.Int(
+        3, usedefault=True, position=1, argstr="%d", desc="dimension of output image"
+    )
+    output_image = File(
+        position=2,
+        argstr="%s",
+        name_source=["op1"],
+        name_template="%s_maths",
+        desc="output image file",
+        keep_extension=True,
+    )
+    operation = traits.Enum(
+        "MajorityVoting",
+        "AverageLabels",
+        mandatory=True,
+        position=3,
+        argstr="%s",
+        desc="mathematical operations",
+    )
+    #TODO: Add support for other ants lf
+
+    images = InputMultiPath(
+        File(exists=True),
+        mandatory=True,
+        position=-1, argstr="%s", desc="input images",
+    )
+
+
+class LabelFusionOutputSpec(TraitedSpec):
+    output_image = File(exists=True, desc="output image file")
+
+
+class LabelFusion(ANTSCommand):
+    _cmd = "ImageMath"
+    input_spec = LabelFusionInputSpec
+    output_spec = LabelFusionOutputSpec
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['output_image'] = os.path.abspath(self.inputs.output_image)
+
         return outputs

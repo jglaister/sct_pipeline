@@ -77,7 +77,6 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     select_init_seg.inputs.index = [template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
-    
     merge_moving_images = pe.MapNode(interface=util.Merge(3), 
                                      iterfield=['in1', 'in2', 'in3'],
                                      name='merge_moving_images')
@@ -94,7 +93,7 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_registration = pe.MapNode(interface=ants.Registration(),
                                      iterfield=['moving_image'],
                                      name='affine_registration')
-    affine_registration.inputs.dimension=3
+    affine_registration.inputs.dimension = 3
     affine_registration.inputs.interpolation = 'Linear'
     affine_registration.inputs.metric = [['MI', 'MeanSquares', 'MeanSquares'], ['MI', 'MeanSquares', 'MeanSquares']]
     affine_registration.inputs.metric_weight = [[0.4, 0.3, 0.3], [0.4, 0.3, 0.3]]
@@ -123,35 +122,82 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     affine_template = pe.Node(interface=sct_util.GenerateTemplate(),
                               name='affine_template')
     wf.connect(affine_4d_template, 'merged_file', affine_template, 'input_file')
-    
-    '''
-    # apply_affine_transform = pe.MapNode(interface=sct_reg.ApplyTransform(),
-    #                                     iterfield=['input_image'],
-    #                                     name='apply_affine_transform')
-    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
-    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
-    # wf.connect(affine_4d_template, 'merged_file', apply_affine_transform, 'input_image')
-    
-    nonlinear_registration = pe.MapNode(interface=sct_reg.RegisterMultimodal(),
-                                     iterfield=['input_image'],
-                                     name='nonlinear_registration')
-    nonlinear_registration.inputs.param = 'step=0,type=im,algo=affine,deformation=1x1x1,iter=100:' \
-                                          'step=1,type=im,algo=affine,deformation=1x1x1,iter=100,metric=MI:' \
-                                          'step=2,type=im,algo=syn,deformation=1x1x1,iter=10,metric=MI '
-    wf.connect(straighten_spinalcord, 'straightened_input', nonlinear_registration, 'input_image')
-    #wf.connect(threshold_labels, 'thresholded_label_files', nonlinear_registration, 'input_segmentation')
-    wf.connect(affine_template, 'template_file', nonlinear_registration, 'destination_image')
-    #wf.connect(select_init_label, 'out', nonlinear_registration, 'destination_segmentation')
 
-    nonlinear_4d_template = pe.Node(interface=fsl.Merge(),
-                                    name='nonlinear_4d_template')
-    nonlinear_4d_template.inputs.dimension = 't'
-    wf.connect(nonlinear_registration, 'warped_input_image', nonlinear_4d_template, 'in_files')
+    affine_warp_labels = pe.MapNode(interface=ants.ApplyTransforms(),
+                                    iterfield=['input_image', 'reference_image', 'transforms'])
+    affine_warp_labels.inputs.interpolation = 'NearestNeighbor'
+    wf.connect(threshold_labels, 'thresholded_label_files', affine_warp_labels, 'input_image')
+    wf.connect(affine_registration, 'warped_image', affine_warp_labels, 'reference_image')
+    wf.connect(affine_registration, 'forward_transforms', affine_warp_labels, 'transforms')
 
-    nonlinear_template = pe.Node(interface=sct_util.GenerateTemplate(),
-                              name='nonlinear_template')
-    wf.connect(nonlinear_4d_template, 'merged_file', nonlinear_template, 'input_file')
-    '''
+    #Handle l-r flip
+    affine_labels = pe.Node(interface=sct_seg.LabelFusion(),
+                            name='affine_labels')
+    affine_labels.inputs.operation = 'MajorityVoting'
+    wf.connect(affine_warp_labels, 'output_image', affine_labels, 'images')
+
+    affine_warp_seg = pe.MapNode(interface=ants.ApplyTransforms(),
+                                 iterfield=['input_image', 'reference_image', 'transforms'],
+                                 name='affine_warp_seg')
+    affine_warp_seg.inputs.interpolation = 'Linear'
+    wf.connect(straighten_segmentation, 'output_file', affine_warp_seg, 'input_image')
+    wf.connect(affine_registration, 'warped_image', affine_warp_seg, 'reference_image')
+    wf.connect(affine_registration, 'forward_transforms', affine_warp_seg, 'transforms')
+
+    affine_4d_seg = pe.Node(interface=fsl.Merge(),
+                            name='affine_4d_seg')
+    affine_4d_seg.inputs.dimension = 't'
+    wf.connect(affine_warp_seg, 'output_image', affine_4d_seg, 'in_files')
+
+    affine_seg = pe.Node(interface=sct_util.GenerateTemplate(),
+                         name='affine_seg')
+    wf.connect(affine_4d_template, 'merged_file', affine_seg, 'input_file')
+
+    merge_fixed_images_affine = pe.Node(interface=util.Merge(3),
+                                 name='merge_fixed_images_affine')
+    wf.connect(affine_template, 'template_file', merge_fixed_images_affine, 'in1')
+    wf.connect(affine_seg, 'template_file', merge_fixed_images_affine, 'in2')
+    wf.connect(affine_labels, 'output_image', merge_fixed_images_affine, 'in3')
+
+    deformable_registration = pe.MapNode(interface=ants.Registration(),
+                                     iterfield=['moving_image'],
+                                     name='deformable_registration')
+    deformable_registration.inputs.dimension = 3
+    deformable_registration.inputs.interpolation = 'Linear'
+    deformable_registration.inputs.metric = [['MI', 'MeanSquares', 'MeanSquares'],
+                                             ['MI', 'MeanSquares', 'MeanSquares'],
+                                             ['MI', 'MeanSquares', 'MeanSquares']]
+    deformable_registration.inputs.metric_weight = [[0.4, 0.3, 0.3], [0.4, 0.3, 0.3], [0.4, 0.3, 0.3]]
+    deformable_registration.inputs.radius_or_number_of_bins = [[32, 5, 5], [32, 5, 5], [32, 5, 5]]
+    deformable_registration.inputs.sampling_strategy = [['Regular', 'Regular', 'Regular'],
+                                                        ['Regular', 'Regular', 'Regular'],
+                                                        ['Regular', 'Regular', 'Regular']]
+    deformable_registration.inputs.sampling_percentage = [[0.25, 0.25, 0.25], [0.25, 0.25, 0.25], [0.25, 0.25, 0.25]]
+    deformable_registration.inputs.transforms = ['Rigid', 'Affine', 'SyN']
+    deformable_registration.inputs.transform_parameters = [(0.1,), (0.1,), (0.1, 3, 0)]
+    deformable_registration.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25], [100, 10, 5]]
+    deformable_registration.inputs.convergence_threshold = [1e-6, 1e-6, 1e-4]
+    deformable_registration.inputs.convergence_window_size = [10, 10, 10]
+    deformable_registration.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1], [2, 1, 0]]
+    deformable_registration.inputs.sigma_units = ['vox', 'vox', 'vox']
+    deformable_registration.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1], [4, 2, 1]]
+    deformable_registration.inputs.write_composite_transform = True
+    deformable_registration.inputs.initial_moving_transform_com = 1
+    deformable_registration.inputs.output_warped_image = True
+    wf.connect(merge_moving_images, 'out', deformable_registration, 'moving_image')
+    wf.connect(merge_fixed_images_affine, 'out', deformable_registration, 'fixed_image')
+
+    #TODO: Compartmentalize reusable deformation segments
+
+    deformable_4d_template = pe.Node(interface=fsl.Merge(),
+                                 name='deformable_4d_template')
+    deformable_4d_template.inputs.dimension = 't'
+    wf.connect(deformable_registration, 'warped_image', deformable_4d_template, 'in_files')
+
+    deformable_template = pe.Node(interface=sct_util.GenerateTemplate(),
+                              name='deformable_template')
+    wf.connect(deformable_4d_template, 'merged_file', deformable_template, 'input_file')
+
     #num_dataset = len(input_node.inputs.spine_files)
     #pick_first = pe.Node(util.Split(), 'pick_first')
     #pick_first.inputs.splits = [1, num_dataset-1]
