@@ -1,11 +1,18 @@
 import os  # system functions
 
-from nipype import Workflow, Node, IdentityInterface
+#from nipype import Workflow, Node, IdentityInterface
 
-from sct_pipeline.interfaces.segmentation import SCTDeepSeg, SCTLabelVertebrae, SCTRegisterToTemplate
+import nipype.interfaces.fsl as fsl
+import nipype.interfaces.ants as ants
+import nipype.pipeline.engine as pe
+import nipype.interfaces.utility as util
 
+#from sct_pipeline.interfaces.segmentation import SCTDeepSeg, SCTLabelVertebrae, SCTRegisterToTemplate
+import sct_pipeline.interfaces.registration as sct_reg
+import sct_pipeline.interfaces.segmentation as sct_seg
+import sct_pipeline.interfaces.util as sct_util
 
-class PipelineWorkflow(Workflow):
+class PipelineWorkflow(pe.Workflow):
     def __init__(self, name, scan_directory, patient_id=None, scan_id=None):
         self.scan_directory = scan_directory
         self.patient_id = patient_id if patient_id is not None else ''
@@ -50,29 +57,47 @@ class PipelineWorkflow(Workflow):
     wf.connect([(input_node, sct_registermultimodal, [('mt_off_sc_image', 'input_image')])])
 '''
 
+
 def create_spinalcord_t2_workflow(scan_directory, patient_id=None, scan_id=None):
     name = 'SCT_T2'
     if patient_id is not None and scan_id is not None:
         scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')
         name += '_' + scan_id
 
-    wf = Workflow(name, scan_directory)
+    wf = pe.Workflow(name, scan_directory)
 
-    input_node = Node(IdentityInterface(["t2_image"]), "inputnode")
+    input_node = pe.Node(pe.IdentityInterface(['t2_image']), 'input_node')
 
-    sct_deepseg = Node(SCTDeepSeg(), 'sct_deepseg')
-    sct_deepseg.inputs.contrast = 't2'
-    sct_deepseg.inputs.threshold = 1.0
-    wf.connect([(input_node, sct_deepseg, [('t2_image', 'input_image')])])
+    spine_segmentation = pe.Node(sct_seg.DeepSeg(), 'spine_segmentation')
+    spine_segmentation.inputs.contrast = 't2'
+    spine_segmentation.inputs.threshold = 1.0
+    wf.connect([(input_node, spine_segmentation, [('t2_image', 'input_image')])])
 
-    sct_label_vertebrae = Node(SCTLabelVertebrae(), 'sct_label_vertebrae')
+    sct_label_vertebrae = pe.Node(sct_seg.LabelVertebrae(), 'label_vertebrae')
     sct_label_vertebrae.inputs.contrast = 't2'
-    wf.connect([(sct_deepseg, sct_label_vertebrae, [('spine_segmentation', 'input_image')])])
+    wf.connect([(spine_segmentation, sct_label_vertebrae, [('spine_segmentation', 'input_image')])])
 
-    sct_register_to_template = Node(SCTRegisterToTemplate(), 'sct_register_to_template')
+    sct_register_to_template = pe.Node(sct_reg.RegisterToTemplate(), 'register_to_template')
 
     #sct_warp_template
     #sct_process_segmentation
 
+def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None):
+    name = 'SCT_DTI'
+    if patient_id is not None and scan_id is not None:
+        scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')
+        name += '_' + scan_id
 
+    wf = pe.Workflow(name, scan_directory)
 
+    input_node = pe.Node(pe.IdentityInterface(['dwi_image', 'bvals', 'bvecs']), 'input_node')
+
+    mean_dwi = pe.Node(sct_util.Mean(), 'mean_dwi')
+    mean_dwi.inputs.dimension = 't'
+    wf.connect(input_node, 'dwi_image', mean_dwi, 'input_image')
+
+    spine_segmentation = pe.Node(sct_seg.PropSeg(), 'spine_segmentation')
+    spine_segmentation.inputs.contrast = 'dwi'
+    wf.connect(mean_dwi, 'mean_image', spine_segmentation, 'input_image')
+
+    create_mask = pe.Node()

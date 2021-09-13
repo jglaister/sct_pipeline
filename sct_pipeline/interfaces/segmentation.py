@@ -77,8 +77,35 @@ class PropSeg(CommandLine):
         return outputs
 
 
-#sct_label_vertebrae -i t2.nii -s t2_seg.nii -c t2 -qc ~/qc_singleSubj
 class LabelVertebraeInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    spine_segmentation = File(exists=True, desc='Input spine segmentation image', argstr='-s %s', mandatory=True)
+    contrast = traits.Enum('t1','t2', desc='Input image contrast type', argstr='-c %s', mandatory=True)
+    initial_label = File(exists=True, desc='Initialize vertebral labeling by providing a nifti file that has a single '
+                                           'disc label', argstr='-initlabel %s')
+    template_directory = Directory(exists=True, desc='template directory', argstr='-t %s')
+    output_directory = Directory(exists=True, desc='output directory', argstr='-ofolder %s')
+
+
+class LabelVertebraeOutputSpec(TraitedSpec):
+    labels = File(exists=True, desc='hard segmentation')
+
+
+class LabelVertebrae(CommandLine):
+    input_spec = LabelVertebraeInputSpec
+    output_spec = LabelVertebraeOutputSpec
+    _cmd = 'sct_label_vertebrae'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outfile = split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
+        if isdefined(self.inputs.output_directory):
+            outputs['labels'] = os.path.abspath(os.path.join(self.inputs.output_directory, outfile))
+        else:
+            outputs['labels'] = os.path.abspath(outfile)
+        return outputs
+
+class CreateMaskInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
     spine_segmentation = File(exists=True, desc='Input spine segmentation image', argstr='-s %s', mandatory=True)
     contrast = traits.Enum('t1','t2', desc='Input image contrast type', argstr='-c %s', mandatory=True)
@@ -150,3 +177,4 @@ class LabelFusion(ANTSCommand):
         outputs['output_image'] = os.path.abspath(self.inputs.output_image)
 
         return outputs
+
