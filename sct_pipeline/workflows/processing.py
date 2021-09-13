@@ -11,6 +11,7 @@ import nipype.interfaces.utility as util
 import sct_pipeline.interfaces.registration as sct_reg
 import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
+import sct_pipeline.interfaces.dmri as sct_dmri
 
 class PipelineWorkflow(pe.Workflow):
     def __init__(self, name, scan_directory, patient_id=None, scan_id=None):
@@ -92,12 +93,31 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
 
     input_node = pe.Node(pe.IdentityInterface(['dwi_image', 'bvals', 'bvecs']), 'input_node')
 
+    #First part of this pipeline is to generate an approximate DWI mask for motion correction
     mean_dwi = pe.Node(sct_util.Mean(), 'mean_dwi')
     mean_dwi.inputs.dimension = 't'
     wf.connect(input_node, 'dwi_image', mean_dwi, 'input_image')
 
-    spine_segmentation = pe.Node(sct_seg.PropSeg(), 'spine_segmentation')
-    spine_segmentation.inputs.contrast = 'dwi'
-    wf.connect(mean_dwi, 'mean_image', spine_segmentation, 'input_image')
+    #Rough segmentation of dwi (DeepSeg is used later as the final segmentation)
+    initial_spine_segmentation = pe.Node(sct_seg.PropSeg(), 'initial_spine_segmentation')
+    initial_spine_segmentation.inputs.contrast = 'dwi'
+    wf.connect(mean_dwi, 'mean_image', initial_spine_segmentation, 'input_image')
 
-    create_mask = pe.Node()
+    #Create a mask that is 35mm from the spine centerline
+    create_mask = pe.Node(sct_seg.CreateMask(), 'create_mask')
+    create_mask.inputs.size = 35
+    wf.connect(mean_dwi, 'mean_image', create_mask, 'input_image')
+    wf.connect(initial_spine_segmentation, 'centerline_file', create_mask, 'centerline_image')
+
+    dmri_moco = pe.Node(sct_dmri.MotionCorrection(), name='dmri_moco')
+    wf.connect(input_node, 'dwi_image', dmri_moco, 'dwi_image')
+    wf.connect(input_node, 'bvals', dmri_moco, 'bvec')
+    wf.connect(input_node, 'bvecs', dmri_moco, 'bval')
+    wf.connect(create_mask, 'mask_file', dmri_moco, 'mask')
+
+    #Re-segment the spine, then finish the DWI processing
+    spine_segmentation = pe.Node(sct_seg.DeepSeg(), name='spine_segmentation')
+    spine_segmentation.inputs.contrast = 'dwi'
+    wf.connect(dmri_moco, 'moco_dwi', spine_segmentation, 'input_image')
+
+    sct_dmri_compute_dti

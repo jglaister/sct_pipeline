@@ -60,6 +60,7 @@ class PropSegInputSpec(CommandLineInputSpec):
 
 class PropSegOutputSpec(TraitedSpec):
     spine_segmentation = File(exists=True, desc='hard segmentation')
+    centerline_file = File(exists=True, desc='hard segmentation')
 
 
 class PropSeg(CommandLine):
@@ -74,6 +75,13 @@ class PropSeg(CommandLine):
             outputs['spine_segmentation'] = os.path.abspath(os.path.join(self.inputs.output_directory, outfile))
         else:
             outputs['spine_segmentation'] = os.path.abspath(outfile)
+
+        centerline = split_filename(self.inputs.input_image)[1] + '_centerline.nii.gz'
+        if isdefined(self.inputs.output_directory):
+            outputs['centerline_file'] = os.path.abspath(os.path.join(self.inputs.output_directory, centerline))
+        else:
+            outputs['centerline_file'] = os.path.abspath(centerline)
+
         return outputs
 
 
@@ -107,30 +115,27 @@ class LabelVertebrae(CommandLine):
 
 class CreateMaskInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
-    spine_segmentation = File(exists=True, desc='Input spine segmentation image', argstr='-s %s', mandatory=True)
-    contrast = traits.Enum('t1','t2', desc='Input image contrast type', argstr='-c %s', mandatory=True)
-    initial_label = File(exists=True, desc='Initialize vertebral labeling by providing a nifti file that has a single '
-                                           'disc label', argstr='-initlabel %s')
-    template_directory = Directory(exists=True, desc='template directory', argstr='-t %s')
-    output_directory = Directory(exists=True, desc='output directory', argstr='-ofolder %s')
+    centerline_image = File(exists=True, desc='Input centerline image', argstr='-p centerline,%s', mandatory=True)
+    shape = traits.Enum('cylinder','box', 'gaussian', desc='Input image contrast type', argstr='-f %s')
+    size_in_mm = traits.Int(41, desc='Mask size in mm', argstr='-size %smm')
+    output_filename = File(desc='output filename', argstr='-o %s')
 
 
-class LabelVertebraeOutputSpec(TraitedSpec):
-    labels = File(exists=True, desc='hard segmentation')
+class CreateMaskOutputSpec(TraitedSpec):
+    mask_file = File(exists=True, desc='hard segmentation')
 
 
-class LabelVertebrae(CommandLine):
-    input_spec = LabelVertebraeInputSpec
-    output_spec = LabelVertebraeOutputSpec
-    _cmd = 'sct_label_vertebrae'
+class CreateMask(CommandLine):
+    input_spec = CreateMaskInputSpec
+    output_spec = CreateMaskOutputSpec
+    _cmd = 'sct_create_mask'
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outfile = split_filename(self.inputs.spine_segmentation)[1] + '_labeled.nii.gz'
-        if isdefined(self.inputs.output_directory):
-            outputs['labels'] = os.path.abspath(os.path.join(self.inputs.output_directory, outfile))
+        if isdefined(self.inputs.output_filename):
+            outputs['mask_file'] = os.path.abspath(self.inputs.output_filename)
         else:
-            outputs['labels'] = os.path.abspath(outfile)
+            outputs['mask_file'] = os.path.abspath(split_filename(self.inputs.spine_segmentation)[1] + '_mask.nii.gz')
         return outputs
 
 
