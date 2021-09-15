@@ -1,0 +1,42 @@
+#! /usr/bin/env python
+import argparse
+import os
+
+from sct_pipeline.workflows.processing import create_spinalcord_dti_workflow
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-dwi', '--dwi-files', nargs='+', type=str, required=True)
+    parser.add_argument('-bval', '--bval-files', nargs='+', type=str, required=True)
+    parser.add_argument('-bvec', '--bvec-files', nargs='+', type=str, required=True)
+    parser.add_argument('-d', '--scan-directory', type=str, default=os.getcwd())
+    parser.add_argument('-p', '--patient-id', type=str)
+    parser.add_argument('-s', '--scan-id', type=str)
+    parser.add_argument('-t', '--num_threads', type=int, default=1)
+    args = parser.parse_args()
+
+    if args.spine_files is not None:
+        args.spine_files = [os.path.abspath(os.path.expanduser(image)) for image in args.spine_files]
+    #if args.seg_files is not None:
+    #    args.seg_files = [os.path.abspath(os.path.expanduser(image)) for image in args.seg_files]
+
+    for a in ['design_mat', 'tcon']:
+        if getattr(args, a) is not None:
+            setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
+
+    wf = create_spinalcord_dti_workflow(args.scan_directory, args.patient_id, args.scan_id)
+
+    if args.spine_files is not None:
+        wf.inputs.input_node.spine_files = args.spine_files
+    #if args.seg_files is not None:
+    #    wf.inputs.input_node.seg_files = args.seg_files
+    for a in ['design_mat', 'tcon']:
+        if getattr(args, a) is not None:
+            setattr(wf.inputs.input_node, a, getattr(args, a))
+
+    if args.num_threads == 1:
+        wf.run()
+    else:
+        wf.run(plugin='MultiProc', plugin_args={'n_procs': args.num_threads})
+
+
