@@ -7,7 +7,6 @@ import nipype.interfaces.ants as ants
 import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
 
-#from sct_pipeline.interfaces.segmentation import SCTDeepSeg, SCTLabelVertebrae, SCTRegisterToTemplate
 import sct_pipeline.interfaces.registration as sct_reg
 import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
@@ -67,7 +66,7 @@ def create_spinalcord_t2_workflow(scan_directory, patient_id=None, scan_id=None)
 
     wf = pe.Workflow(name, scan_directory)
 
-    input_node = pe.Node(pe.IdentityInterface(['t2_image']), 'input_node')
+    input_node = pe.Node(util.IdentityInterface(['t2_image']), 'input_node')
 
     spine_segmentation = pe.Node(sct_seg.DeepSeg(), 'spine_segmentation')
     spine_segmentation.inputs.contrast = 't2'
@@ -91,7 +90,7 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
 
     wf = pe.Workflow(name, scan_directory)
 
-    input_node = pe.Node(pe.IdentityInterface(['dwi_file', 'bval_file', 'bvec_file']), 'input_node')
+    input_node = pe.Node(util.IdentityInterface(['dwi_file', 'bval_file', 'bvec_file']), 'input_node')
 
     # First part of this pipeline is to generate an approximate DWI mask for motion correction
     mean_dwi = pe.Node(sct_util.Mean(), 'mean_dwi')
@@ -131,7 +130,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
 
     wf = pe.Workflow(name, scan_directory)
 
-    input_node = pe.Node(pe.IdentityInterface(['mt_on_file', 'mt_off_file']), 'input_node')
+    input_node = pe.Node(util.IdentityInterface(['mt_on_file', 'mt_off_file']), 'input_node')
 
     #TODO: Investigate if smoothing is needed
     spine_segmentation = pe.Node(sct_seg.DeepSeg(), name='spine_segmentation')
