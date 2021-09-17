@@ -134,7 +134,7 @@ class ExtractMetric(CommandLine):
         if isdefined(self.inputs.output_filename):
             outputs['output_csv'] = os.path.abspath(self.inputs.output_filename)
         else:
-            outputs['output_csv'] = os.path.abspath('csa.csv')
+            outputs['output_csv'] = os.path.abspath('extract_metric.csv')
         return outputs
 
 #sct_label_vertebrae -i t2.nii -s t2_seg.nii -c t2 -qc ~/qc_singleSubj
