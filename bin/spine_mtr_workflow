@@ -21,7 +21,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.use_iacl_struct and args.patient_id is None and args.scan_id is None:
-        print('Need to provide a patient_id and scan_id to use the iacl folder structure')
+        raise ValueError('Need to provide a patient_id and scan_id to use the IACL folder structure')
 
     for a in ['mton_file','mtoff_file']:
         if getattr(args, a) is not None:
