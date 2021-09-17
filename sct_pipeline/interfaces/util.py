@@ -87,7 +87,6 @@ class Mean(CommandLine):
         return outputs
 
 
-#sct_label_vertebrae -i t2.nii -s t2_seg.nii -c t2 -qc ~/qc_singleSubj
 class ProcessSegInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
     slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')
@@ -112,6 +111,31 @@ class ProcessSeg(CommandLine):
             outputs['output_csv'] = os.path.abspath('csa.csv')
         return outputs
 
+
+class ExtractMetricInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input metric image', argstr='-i %s', mandatory=True)
+    label_image = File(exists=True, desc='Input metric image', argstr='-f %s', mandatory=True)
+    slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')
+    per_slice = traits.Range(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
+    output_filename = traits.Str(desc='Output filename', argstr='-o %s')
+
+
+class ExtractMetricOutputSpec(TraitedSpec):
+    output_csv = File(exists=True, desc='Output CSV')
+
+
+class ExtractMetric(CommandLine):
+    input_spec = ExtractMetricInputSpec
+    output_spec = ExtractMetricOutputSpec
+    _cmd = 'sct_extract_metric'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        if isdefined(self.inputs.output_filename):
+            outputs['output_csv'] = os.path.abspath(self.inputs.output_filename)
+        else:
+            outputs['output_csv'] = os.path.abspath('csa.csv')
+        return outputs
 
 #sct_label_vertebrae -i t2.nii -s t2_seg.nii -c t2 -qc ~/qc_singleSubj
 class ComputeMTRInputSpec(CommandLineInputSpec):
