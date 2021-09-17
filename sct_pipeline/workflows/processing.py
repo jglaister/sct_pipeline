@@ -153,6 +153,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
     wf.connect(input_node, 'mt_on_file', compute_mtr, 'mt_on_image')
 
+    return wf
     #sct_extract_metric
 
     #sct_process_segmentation
