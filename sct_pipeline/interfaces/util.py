@@ -121,7 +121,7 @@ class ComputeMTRInputSpec(CommandLineInputSpec):
 
 
 class ComputeMTROutputSpec(TraitedSpec):
-    mtr_image = File(exists=True, desc='Output CSV')
+    mtr_image = File(exists=True, desc='Output MTR')
 
 
 class ComputeMTR(CommandLine):
@@ -131,10 +131,7 @@ class ComputeMTR(CommandLine):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        if isdefined(self.inputs.output_filename):
-            outputs['mtr_image'] = os.path.abspath(self.inputs.output_filename)
-        else:
-            outputs['mtr_image'] = os.path.abspath('csa.csv')
+        outputs['mtr_image'] = os.path.abspath('mtr.nii.gz')
         return outputs
 
 
