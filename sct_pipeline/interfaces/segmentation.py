@@ -35,7 +35,7 @@ class DeepSegInputSpec(CommandLineInputSpec):
 
 class DeepSegOutputSpec(TraitedSpec):
     spine_segmentation = File(exists=True, desc='segmentation')
-
+    centerline_file = File(exists=True, desc='hard segmentation')
 
 class DeepSeg(CommandLine):
     input_spec = DeepSegInputSpec
@@ -49,6 +49,13 @@ class DeepSeg(CommandLine):
             outputs['spine_segmentation'] = os.path.abspath(os.path.join(self.inputs.output_directory, outfile))
         else:
             outputs['spine_segmentation'] = os.path.abspath(outfile)
+
+        centerline = split_filename(self.inputs.input_image)[1] + '_centerline.nii.gz'
+        if isdefined(self.inputs.output_directory):
+            outputs['centerline_file'] = os.path.abspath(os.path.join(self.inputs.output_directory, centerline))
+        else:
+            outputs['centerline_file'] = os.path.abspath(centerline)
+
         return outputs
 
 
