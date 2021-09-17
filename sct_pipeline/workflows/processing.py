@@ -159,6 +159,10 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
 
+    if compute_csa is True:
+        process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
+        wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
+
     return wf
     #sct_extract_metric
 
