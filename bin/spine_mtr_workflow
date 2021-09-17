@@ -2,27 +2,26 @@
 import argparse
 import os
 
-from sct_pipeline.workflows.processing import create_spinalcord_dti_workflow
+from sct_pipeline.workflows.processing import create_spinalcord_mtr_workflow
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-dwi', '--dwi-file', nargs='+', type=str, required=True)
-    parser.add_argument('-bval', '--bval-file', nargs='+', type=str, required=True)
-    parser.add_argument('-bvec', '--bvec-file', nargs='+', type=str, required=True)
-    #TODO: Add registration/segmentation from MT On
+    parser.add_argument('-mton', '--mton-file', nargs='+', type=str, required=True)
+    parser.add_argument('-mtoff', '--mtoff-file', nargs='+', type=str, required=True)
+    #TODO: C2/C4 points? Compute CSA optional
     parser.add_argument('-d', '--scan-directory', type=str, default=os.getcwd())
     parser.add_argument('-p', '--patient-id', type=str)
     parser.add_argument('-s', '--scan-id', type=str)
     parser.add_argument('-t', '--num_threads', type=int, default=1)
     args = parser.parse_args()
 
-    for a in ['dwi_file','bval_file','bvec_file']:
+    for a in ['mton_file','mtoff_file']:
         if getattr(args, a) is not None:
             setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
 
-    wf = create_spinalcord_dti_workflow(args.scan_directory, args.patient_id, args.scan_id)
+    wf = create_spinalcord_mtr_workflow(args.scan_directory, args.patient_id, args.scan_id, compute_csa=True)
 
-    for a in ['dwi_file','bval_file','bvec_file']:
+    for a in ['mton_file','mtoff_file']:
         if getattr(args, a) is not None:
             setattr(wf.inputs.input_node, a, getattr(args, a))
 

@@ -113,6 +113,31 @@ class ProcessSeg(CommandLine):
         return outputs
 
 
+#sct_label_vertebrae -i t2.nii -s t2_seg.nii -c t2 -qc ~/qc_singleSubj
+class ComputeMTRInputSpec(CommandLineInputSpec):
+    mt_on_image = File(exists=True, desc='Input spine image', argstr='-mt1 %s', mandatory=True)
+    mt_off_image = File(exists=True, desc='Input spine image', argstr='-mt0 %s', mandatory=True)
+    #output_filename = traits.Str(desc='Output filename', argstr='-o %s')
+
+
+class ComputeMTROutputSpec(TraitedSpec):
+    mtr_image = File(exists=True, desc='Output CSV')
+
+
+class ComputeMTR(CommandLine):
+    input_spec = ComputeMTRInputSpec
+    output_spec = ComputeMTROutputSpec
+    _cmd = 'sct_compute_mtr'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        if isdefined(self.inputs.output_filename):
+            outputs['mtr_image'] = os.path.abspath(self.inputs.output_filename)
+        else:
+            outputs['mtr_image'] = os.path.abspath('csa.csv')
+        return outputs
+
+
 class ThresholdLabelsInputSpec(BaseInterfaceInputSpec):
     label_files = traits.List(File(exists=True), desc='Vertebrae label image', mandatory=True)
     threshold = traits.Bool(default_value=False, desc='If true, threshold to a binary mask.')

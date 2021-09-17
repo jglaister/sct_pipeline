@@ -91,33 +91,69 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
 
     wf = pe.Workflow(name, scan_directory)
 
-    input_node = pe.Node(pe.IdentityInterface(['dwi_image', 'bvals', 'bvecs']), 'input_node')
+    input_node = pe.Node(pe.IdentityInterface(['dwi_file', 'bval_file', 'bvec_file']), 'input_node')
 
-    #First part of this pipeline is to generate an approximate DWI mask for motion correction
+    # First part of this pipeline is to generate an approximate DWI mask for motion correction
     mean_dwi = pe.Node(sct_util.Mean(), 'mean_dwi')
     mean_dwi.inputs.dimension = 't'
     wf.connect(input_node, 'dwi_image', mean_dwi, 'input_image')
 
-    #Rough segmentation of dwi (DeepSeg is used later as the final segmentation)
+    # Rough segmentation of dwi (DeepSeg is used later as the final segmentation)
     initial_spine_segmentation = pe.Node(sct_seg.PropSeg(), 'initial_spine_segmentation')
     initial_spine_segmentation.inputs.contrast = 'dwi'
     wf.connect(mean_dwi, 'mean_image', initial_spine_segmentation, 'input_image')
 
-    #Create a mask that is 35mm from the spine centerline
+    # Create a mask that is 35mm from the spine centerline
     create_mask = pe.Node(sct_seg.CreateMask(), 'create_mask')
     create_mask.inputs.size = 35
     wf.connect(mean_dwi, 'mean_image', create_mask, 'input_image')
     wf.connect(initial_spine_segmentation, 'centerline_file', create_mask, 'centerline_image')
 
-    dmri_moco = pe.Node(sct_dmri.MotionCorrection(), name='dmri_moco')
-    wf.connect(input_node, 'dwi_image', dmri_moco, 'dwi_image')
-    wf.connect(input_node, 'bvals', dmri_moco, 'bvec')
-    wf.connect(input_node, 'bvecs', dmri_moco, 'bval')
-    wf.connect(create_mask, 'mask_file', dmri_moco, 'mask')
+    motion_correction = pe.Node(sct_dmri.MotionCorrection(), name='motion_correction')
+    wf.connect(input_node, 'dwi_image', motion_correction, 'dwi_image')
+    wf.connect(input_node, 'bvals', motion_correction, 'bvec')
+    wf.connect(input_node, 'bvecs', motion_correction, 'bval')
+    wf.connect(create_mask, 'mask_file', motion_correction, 'mask')
 
-    #Re-segment the spine, then finish the DWI processing
+    # Re-segment the spine, then finish the DWI processing
     spine_segmentation = pe.Node(sct_seg.DeepSeg(), name='spine_segmentation')
     spine_segmentation.inputs.contrast = 'dwi'
-    wf.connect(dmri_moco, 'moco_dwi', spine_segmentation, 'input_image')
+    wf.connect(motion_correction, 'moco_dwi', spine_segmentation, 'input_image')
 
-    sct_dmri_compute_dti
+    # sct_dmri_compute_dti
+
+
+def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None, compute_csa=True):
+    name = 'SCT_MTR'
+    if patient_id is not None and scan_id is not None:
+        scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')
+        name += '_' + scan_id
+
+    wf = pe.Workflow(name, scan_directory)
+
+    input_node = pe.Node(pe.IdentityInterface(['mt_on_file', 'mt_off_file']), 'input_node')
+
+    #TODO: Investigate if smoothing is needed
+    spine_segmentation = pe.Node(sct_seg.DeepSeg(), name='spine_segmentation')
+    spine_segmentation.inputs.contrast = 't2'
+    wf.connect(input_node, 'mt_on_file', spine_segmentation, 'input_image')
+
+    create_mask = pe.Node(sct_seg.CreateMask(), 'create_mask')
+    create_mask.inputs.size = 35
+    wf.connect(input_node, 'mt_on_file', create_mask, 'input_image')
+    wf.connect(spine_segmentation, 'centerline_file', create_mask, 'centerline_image')
+
+    register_multimodal = pe.Node(sct_reg.RegisterMultimodal(), 'register_mtoff_to_mton')
+    register_multimodal.inputs.param = 'step=1,type=im,algo=slicereg,metric=CC'
+    register_multimodal.inputs.interpolation = 'spline'
+    wf.connect(input_node, 'mt_off_file', register_multimodal, 'input_image')
+    wf.connect(input_node, 'mt_on_file', register_multimodal, 'destination_image')
+    wf.connect(create_mask, 'mask_file', register_multimodal, 'mask')
+
+    compute_mtr = pe.Node(sct_reg.RegisterMultimodal(), 'compute_mtr')
+    wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
+    wf.connect(input_node, 'mt_on_file', compute_mtr, 'mt_on_image')
+
+    #sct_extract_metric
+
+    #sct_process_segmentation
