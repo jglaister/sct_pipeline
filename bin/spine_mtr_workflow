@@ -12,6 +12,10 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--scan-directory', type=str, default=os.getcwd())
     parser.add_argument('-p', '--patient-id', type=str)
     parser.add_argument('-s', '--scan-id', type=str)
+    parser.add_argument('--use-iacl-struct', type=bool, default=False)
+    # If True, write the intermediate files to scan_directory/patient_id/pipeline/SCT_MTR_scan_id folder
+    # If False and ids provided, write intermediate files to scan_directory/patient_id/scan_id/SCT_MTR_scan_id
+    # If patient_id and scan_id are None, write to scan_directory/SCT_MTR
     parser.add_argument('-t', '--num_threads', type=int, default=1)
     args = parser.parse_args()
 
