@@ -140,7 +140,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     create_mask = pe.Node(sct_seg.CreateMask(), 'create_mask')
     create_mask.inputs.size_in_mm = 41  # Default not in mm. Does this affect things?
     wf.connect(input_node, 'mton_file', create_mask, 'input_image')
-    wf.connect(spine_segmentation, 'centerline_file', create_mask, 'centerline_image')
+    wf.connect(spine_segmentation, 'spine_segmentation', create_mask, 'centerline_image')
 
     register_multimodal = pe.Node(sct_reg.RegisterMultimodal(), 'register_mtoff_to_mton')
     register_multimodal.inputs.param = 'step=1,type=im,algo=slicereg,metric=CC'
