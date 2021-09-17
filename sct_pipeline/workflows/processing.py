@@ -122,7 +122,8 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
     # sct_dmri_compute_dti
 
 
-def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None, compute_csa=True):
+def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None,
+                                   compute_csa=False, use_iacl_struct=False):
     name = 'SCT_MTR'
     if patient_id is not None and scan_id is not None:
         scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')

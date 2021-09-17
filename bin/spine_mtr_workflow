@@ -12,18 +12,23 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--scan-directory', type=str, default=os.getcwd())
     parser.add_argument('-p', '--patient-id', type=str)
     parser.add_argument('-s', '--scan-id', type=str)
-    parser.add_argument('--use-iacl-struct', type=bool, default=False)
+    parser.add_argument('--compute-csa', action='store_true', default=False)
+    parser.add_argument('--use-iacl-struct', action='store_true', default=False)
     # If True, write the intermediate files to scan_directory/patient_id/pipeline/SCT_MTR_scan_id folder
     # If False and ids provided, write intermediate files to scan_directory/patient_id/scan_id/SCT_MTR_scan_id
     # If patient_id and scan_id are None, write to scan_directory/SCT_MTR
     parser.add_argument('-t', '--num_threads', type=int, default=1)
     args = parser.parse_args()
 
+    if args.use_iacl_struct and args.patient_id is None and args.scan_id is None:
+        print('Need to provide a patient_id and scan_id to use the iacl folder structure')
+
     for a in ['mton_file','mtoff_file']:
         if getattr(args, a) is not None:
             setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
 
-    wf = create_spinalcord_mtr_workflow(args.scan_directory, args.patient_id, args.scan_id, compute_csa=True)
+    wf = create_spinalcord_mtr_workflow(args.scan_directory, args.patient_id, args.scan_id,
+                                        compute_csa=args.compute_csa, use_iacl_struct=args.use_iacl_struct)
 
     for a in ['mton_file','mtoff_file']:
         if getattr(args, a) is not None:
