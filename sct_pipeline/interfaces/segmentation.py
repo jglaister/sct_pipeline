@@ -135,7 +135,7 @@ class CreateMask(CommandLine):
         if isdefined(self.inputs.output_filename):
             outputs['mask_file'] = os.path.abspath(self.inputs.output_filename)
         else:
-            outputs['mask_file'] = os.path.abspath(split_filename(self.inputs.input_image)[1] + '_mask.nii.gz')
+            outputs['mask_file'] = os.path.abspath('mask_' + split_filename(self.inputs.input_image)[1] + '.nii.gz')
         return outputs
 
 
