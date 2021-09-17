@@ -149,7 +149,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(input_node, 'mt_on_file', register_multimodal, 'destination_image')
     wf.connect(create_mask, 'mask_file', register_multimodal, 'mask')
 
-    compute_mtr = pe.Node(sct_reg.ComputeMTR(), 'compute_mtr')
+    compute_mtr = pe.Node(sct_util.ComputeMTR(), 'compute_mtr')
     wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
     wf.connect(input_node, 'mt_on_file', compute_mtr, 'mt_on_image')
 
