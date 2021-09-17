@@ -130,28 +130,28 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
 
     wf = pe.Workflow(name, scan_directory)
 
-    input_node = pe.Node(util.IdentityInterface(['mt_on_file', 'mt_off_file']), 'input_node')
+    input_node = pe.Node(util.IdentityInterface(['mton_file', 'mtoff_file']), 'input_node')
 
     #TODO: Investigate if smoothing is needed
     spine_segmentation = pe.Node(sct_seg.DeepSeg(), name='spine_segmentation')
     spine_segmentation.inputs.contrast = 't2'
-    wf.connect(input_node, 'mt_on_file', spine_segmentation, 'input_image')
+    wf.connect(input_node, 'mton_file', spine_segmentation, 'input_image')
 
     create_mask = pe.Node(sct_seg.CreateMask(), 'create_mask')
     create_mask.inputs.size_in_mm = 41  # Default not in mm. Does this affect things?
-    wf.connect(input_node, 'mt_on_file', create_mask, 'input_image')
+    wf.connect(input_node, 'mton_file', create_mask, 'input_image')
     wf.connect(spine_segmentation, 'centerline_file', create_mask, 'centerline_image')
 
     register_multimodal = pe.Node(sct_reg.RegisterMultimodal(), 'register_mtoff_to_mton')
     register_multimodal.inputs.param = 'step=1,type=im,algo=slicereg,metric=CC'
     register_multimodal.inputs.interpolation = 'spline'
-    wf.connect(input_node, 'mt_off_file', register_multimodal, 'input_image')
-    wf.connect(input_node, 'mt_on_file', register_multimodal, 'destination_image')
+    wf.connect(input_node, 'mtoff_file', register_multimodal, 'input_image')
+    wf.connect(input_node, 'mton_file', register_multimodal, 'destination_image')
     wf.connect(create_mask, 'mask_file', register_multimodal, 'mask')
 
     compute_mtr = pe.Node(sct_util.ComputeMTR(), 'compute_mtr')
     wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
-    wf.connect(input_node, 'mt_on_file', compute_mtr, 'mt_on_image')
+    wf.connect(input_node, 'mton_file', compute_mtr, 'mt_on_image')
 
     return wf
     #sct_extract_metric
