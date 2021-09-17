@@ -153,6 +153,12 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
     wf.connect(input_node, 'mton_file', compute_mtr, 'mt_on_image')
 
+    #TODO: C2/C4 points
+    #TODO: Template registration?
+    extract_mtr = pe.Node(sct_util.ExtractMetric(), 'extract_mtr')
+    wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
+    wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
+
     return wf
     #sct_extract_metric
 
