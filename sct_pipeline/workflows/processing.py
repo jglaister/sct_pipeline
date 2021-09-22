@@ -169,6 +169,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
 
+    # Assumes the FOV is centered at the c3c4 disc
     label_utils = pe.Node(sct_util.LabelUtils(), 'label_utils')
     label_utils.inputs.output_file = 'c3c4.nii.gz'
     label_utils.inputs.create_seg_mid = 4
@@ -177,10 +178,16 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     template_registration = pe.Node(sct_reg.RegisterToTemplate(), 'template_registration')
     template_registration.inputs.reference = 'subject'
     template_registration.inputs.param = 'step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=bsplinesyn,slicewise=1'
+    # Parameters come from the SCT MT example
     wf.connect(input_node, 'mton_file', template_registration, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', template_registration, 'spine_segmentation')
     wf.connect(label_utils, 'label_image', template_registration, 'disc_labels')
 
+    warp_template = pe.Node(sct_reg.WarpTemplate(), 'warp_template')
+    warp_template.inputs.warp_white_matter = 1
+    warp_template.inputs.warp_spinal_levels = 1
+    wf.connect(input_node,'mton_file', warp_template,'destination_image')
+    wf.connect(template_registration, 'warp_template2anat', warp_template,'warping_field')
 
     if compute_csa is True:
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')

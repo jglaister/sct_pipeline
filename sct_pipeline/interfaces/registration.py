@@ -51,6 +51,35 @@ class RegisterToTemplate(CommandLine):
         return outputs
 
 
+class WarpTemplateInputSpec(CommandLineInputSpec):
+    destination_image = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
+    warping_field = File(exists=True, desc='Input spine segmentation', argstr='-w %s', mandatory=True)
+    warp_white_matter = traits.Enum(0, 1, desc='Input image contrast type', argstr='-a %s')
+    warp_spinal_levels = traits.Enum(0, 1, desc='Input image contrast type', argstr='-s %s')
+
+
+class WarpTemplateOutputSpec(TraitedSpec):
+    anat2template = File(exists=True, desc='Output CSV')
+    template2anat = File(exists=True, desc='Output CSV')
+    warp_anat2template = File(exists=True, desc='Output CSV')
+    warp_template2anat = File(exists=True, desc='Output CSV')
+
+
+class WarpTemplate(CommandLine):
+    input_spec = WarpTemplateInputSpec
+    output_spec = WarpTemplateOutputSpec
+    _cmd = 'sct_warp_template'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+
+        outputs['anat2template'] = os.path.abspath('anat2template.nii.gz')
+        outputs['template2anat'] = os.path.abspath('template2anat.nii.gz')
+        outputs['warp_anat2template'] = os.path.abspath('warp_anat2template.nii.gz')
+        outputs['warp_template2anat'] = os.path.abspath('warp_template2anat.nii.gz')
+
+        return outputs
+
 class RegisterMultimodalInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
     destination_image = File(exists=True, desc='Input spine image', argstr='-d %s', mandatory=True)
