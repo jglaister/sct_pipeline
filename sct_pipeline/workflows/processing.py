@@ -175,27 +175,31 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
 
     if use_iacl_struct is True:
         out_file_base = os.path.join(scan_directory, patient_id, scan_id, patient_id + '_' + scan_id + '_SPINE')
+    else:
+        if patient_id is not None:
+            out_file_base = patient_id + '_' + scan_id if scan_id is not None else patient_id
+            out_file_base = os.path.join(scan_directory, out_file_base + '_SPINE')
 
-        export_mtr = pe.Node(io.ExportFile(), name='export_mtr')
-        export_mtr.inputs.out_file = out_file_base + '_MTR.nii.gz'
-        wf.connect(spine_segmentation, 'spine_segmentation', export_mtr, 'in_file')
+    export_mtr = pe.Node(io.ExportFile(), name='export_mtr')
+    export_mtr.inputs.out_file = out_file_base + '_MTR.nii.gz'
+    wf.connect(spine_segmentation, 'spine_segmentation', export_mtr, 'in_file')
 
-        export_mton = pe.Node(io.ExportFile(), name='export_mton')
-        export_mton.inputs.out_file = out_file_base + '_MT_ON.nii.gz'
-        wf.connect(input_node, 'mton_file', export_mton, 'in_file')
+    export_mton = pe.Node(io.ExportFile(), name='export_mton')
+    export_mton.inputs.out_file = out_file_base + '_MT_ON.nii.gz'
+    wf.connect(input_node, 'mton_file', export_mton, 'in_file')
 
-        export_mtoff = pe.Node(io.ExportFile(), name='export_mtoff')
-        export_mtoff.inputs.out_file = out_file_base + '_MT_OFF_reg.nii.gz'
-        wf.connect(register_multimodal, 'warped_input_image', export_mtoff, 'in_file')
+    export_mtoff = pe.Node(io.ExportFile(), name='export_mtoff')
+    export_mtoff.inputs.out_file = out_file_base + '_MT_OFF_reg.nii.gz'
+    wf.connect(register_multimodal, 'warped_input_image', export_mtoff, 'in_file')
 
-        export_mtr_metric = pe.Node(io.ExportFile(), name='export_mtr_metric')
-        export_mtr_metric.inputs.out_file = out_file_base + '_MTR_perslice.csv'
-        wf.connect(extract_mtr, 'output_csv', export_mtr_metric, 'in_file')
+    export_mtr_metric = pe.Node(io.ExportFile(), name='export_mtr_metric')
+    export_mtr_metric.inputs.out_file = out_file_base + '_MTR_perslice.csv'
+    wf.connect(extract_mtr, 'output_csv', export_mtr_metric, 'in_file')
 
-        if compute_csa is True:
-            export_csa_metric = pe.Node(io.ExportFile(), name='export_csa_metric')
-            export_csa_metric.inputs.out_file = out_file_base + '_CSA_perslice.csv'
-            wf.connect(process_seg, 'output_csv', export_csa_metric, 'in_file')
+    if compute_csa is True:
+        export_csa_metric = pe.Node(io.ExportFile(), name='export_csa_metric')
+        export_csa_metric.inputs.out_file = out_file_base + '_CSA_perslice.csv'
+        wf.connect(process_seg, 'output_csv', export_csa_metric, 'in_file')
 
     return wf
 
