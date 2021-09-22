@@ -89,7 +89,7 @@ class Mean(CommandLine):
 
 class LabelUtilsInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
-    create_seg_mid = traits.Int(desc='Dimension to take mean over', argstr='-create_seg_mid %s')
+    create_seg_mid = traits.Int(desc='Dimension to take mean over', argstr='-create-seg-mid %s')
     output_file = File(desc='output filename', argstr='-o %s')
 
 
