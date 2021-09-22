@@ -29,7 +29,10 @@ class RegisterToTemplateInputSpec(CommandLineInputSpec):
 
 
 class RegisterToTemplateOutputSpec(TraitedSpec):
-    output_file = File(exists=True, desc='Output CSV')
+    anat2template = File(exists=True, desc='Output CSV')
+    template2anat = File(exists=True, desc='Output CSV')
+    warp_anat2template = File(exists=True, desc='Output CSV')
+    warp_template2anat = File(exists=True, desc='Output CSV')
 
 
 class RegisterToTemplate(CommandLine):
@@ -39,10 +42,12 @@ class RegisterToTemplate(CommandLine):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        if isdefined(self.inputs.output_filename):
-            outputs['output_file'] = os.path.abspath(self.inputs.output_filename)
-        else:
-            outputs['output_file'] = os.path.abspath('csa.csv')
+
+        outputs['anat2template'] = os.path.abspath('anat2template.nii.gz')
+        outputs['template2anat'] = os.path.abspath('template2anat.nii.gz')
+        outputs['warp_anat2template'] = os.path.abspath('warp_anat2template.nii.gz')
+        outputs['warp_template2anat'] = os.path.abspath('warp_template2anat.nii.gz')
+
         return outputs
 
 
