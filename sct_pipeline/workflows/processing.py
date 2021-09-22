@@ -169,6 +169,19 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
     wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
 
+    label_utils = pe.Node(sct_util.LabelUtils(), 'label_utils')
+    label_utils.inputs.output_file = 'c3c4.nii.gz'
+    label_utils.inputs.create_seg_mid = 4
+    wf.connect(spine_segmentation, 'spine_segmentation', label_utils, 'input_image')
+
+    template_registration = pe.Node(sct_reg.RegisterToTemplate(), 'template_registration')
+    template_registration.inputs.reference = 'subject'
+    template_registration.inputs.param = 'step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=bsplinesyn,slicewise=1'
+    wf.connect(input_node, 'mton_file', template_registration, 'input_image')
+    wf.connect(spine_segmentation, 'spine_segmentation', template_registration, 'spine_segmentation')
+    wf.connect(label_utils, 'label_image', template_registration, 'disc_labels')
+
+
     if compute_csa is True:
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
         wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')

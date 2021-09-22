@@ -87,6 +87,30 @@ class Mean(CommandLine):
         return outputs
 
 
+class LabelUtilsInputSpec(CommandLineInputSpec):
+    input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
+    create_seg_mid = traits.Int(desc='Dimension to take mean over', argstr='-create_seg_mid %s')
+    output_file = File(desc='output filename', argstr='-o %s')
+
+
+class LabelUtilsOutputSpec(TraitedSpec):
+    label_image = File(exists=True, desc='hard segmentation')
+
+
+class LabelUtils(CommandLine):
+    input_spec = LabelUtilsInputSpec
+    output_spec = LabelUtilsOutputSpec
+    _cmd = 'sct_label_utils'
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        if isdefined(self.inputs.output_file):
+            outputs['label_image'] = os.path.abspath(self.inputs.output_file)
+        else:
+            outputs['label_image'] = os.path.abspath('labels.nii.gz')
+        return outputs
+
+
 class ProcessSegInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
     slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')

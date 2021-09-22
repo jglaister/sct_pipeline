@@ -24,6 +24,8 @@ class RegisterToTemplateInputSpec(CommandLineInputSpec):
     spine_segmentation = File(exists=True, desc='Input spine segmentation', argstr='-s %s', mandatory=True)
     contrast = traits.Enum('t1', 't2', 't2s', desc='Input image contrast type', argstr='-c %s')
     disc_labels = File(exists=True, desc='Input disc label file', argstr='-ldisc %s', mandatory=True)
+    reference = traits.Enum('template','subject',argstr='-ref %s')
+    param = traits.Str(desc='Parameters', argstr='-param %s')
 
 
 class RegisterToTemplateOutputSpec(TraitedSpec):
@@ -33,7 +35,7 @@ class RegisterToTemplateOutputSpec(TraitedSpec):
 class RegisterToTemplate(CommandLine):
     input_spec = RegisterToTemplateInputSpec
     output_spec = RegisterToTemplateOutputSpec
-    _cmd = 'sct_process_segmentation'
+    _cmd = 'sct_register_to_template'
 
     def _list_outputs(self):
         outputs = self._outputs().get()
