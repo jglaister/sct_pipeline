@@ -183,24 +183,40 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
             out_file_base = 'out'
         out_file_base = os.path.join(scan_directory, out_file_base + '_SPINE')
 
+    export_segmentation = pe.Node(io.ExportFile(), name='export_segmentation')
+    export_segmentation.inputs.check_extension = True
+    export_segmentation.inputs.clobber = True
+    export_segmentation.inputs.out_file = out_file_base + '_seg.nii.gz'
+    wf.connect(spine_segmentation, 'spine_segmentation', export_segmentation, 'in_file')
+
     export_mtr = pe.Node(io.ExportFile(), name='export_mtr')
+    export_mtr.inputs.check_extension = True
+    export_mtr.inputs.clobber = True
     export_mtr.inputs.out_file = out_file_base + '_MTR.nii.gz'
-    wf.connect(spine_segmentation, 'spine_segmentation', export_mtr, 'in_file')
+    wf.connect(compute_mtr, 'mtr_image', export_mtr, 'in_file')
 
     export_mton = pe.Node(io.ExportFile(), name='export_mton')
+    export_mton.inputs.check_extension = True
+    export_mton.inputs.clobber = True
     export_mton.inputs.out_file = out_file_base + '_MT_ON.nii.gz'
     wf.connect(input_node, 'mton_file', export_mton, 'in_file')
 
     export_mtoff = pe.Node(io.ExportFile(), name='export_mtoff')
+    export_mtoff.inputs.check_extension = True
+    export_mtoff.inputs.clobber = True
     export_mtoff.inputs.out_file = out_file_base + '_MT_OFF_reg.nii.gz'
     wf.connect(register_multimodal, 'warped_input_image', export_mtoff, 'in_file')
 
     export_mtr_metric = pe.Node(io.ExportFile(), name='export_mtr_metric')
+    export_mtr_metric.inputs.check_extension = True
+    export_mtr_metric.inputs.clobber = True
     export_mtr_metric.inputs.out_file = out_file_base + '_MTR_perslice.csv'
     wf.connect(extract_mtr, 'output_csv', export_mtr_metric, 'in_file')
 
     if compute_csa is True:
         export_csa_metric = pe.Node(io.ExportFile(), name='export_csa_metric')
+        export_csa_metric.inputs.check_extension = True
+        export_csa_metric.inputs.clobber = True
         export_csa_metric.inputs.out_file = out_file_base + '_CSA_perslice.csv'
         wf.connect(process_seg, 'output_csv', export_csa_metric, 'in_file')
 
