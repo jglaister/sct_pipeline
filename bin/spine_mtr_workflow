@@ -15,7 +15,8 @@ if __name__ == '__main__':
     parser.add_argument('--compute-csa', action='store_true', default=False)
     parser.add_argument('--use-iacl-struct', action='store_true', default=False)
     # If True, write the intermediate files to scan_directory/patient_id/pipeline/SCT_MTR_scan_id folder
-    # If False and ids provided, write intermediate files to scan_directory/patient_id/scan_id/SCT_MTR_scan_id
+    # and output files are copied to scan_directory/patient_id/scan_id/
+    # If False and ids provided, write intermediate files to scan_directory/patient_id_scan_id/SCT_MTR
     # If patient_id and scan_id are None, write to scan_directory/SCT_MTR
     parser.add_argument('-t', '--num_threads', type=int, default=1)
     args = parser.parse_args()
