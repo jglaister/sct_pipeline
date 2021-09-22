@@ -145,7 +145,7 @@ class ExtractMetricInputSpec(CommandLineInputSpec):
     per_slice = traits.Enum(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
     output_filename = traits.Str(desc='Output filename', argstr='-o %s')
     vertebrae = traits.Str(desc='Output filename', argstr='-vert %s')
-    vertebrae_image = File(exists=True, desc='Input metric image', argstr='-vertfile %s', mandatory=True)
+    vertebrae_image = File(exists=True, desc='Input metric image', argstr='-vertfile %s')
 
 
 class ExtractMetricOutputSpec(TraitedSpec):
