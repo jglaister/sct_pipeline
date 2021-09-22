@@ -126,6 +126,8 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
 def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None,
                                    compute_csa=False, use_iacl_struct=False):
     name = 'SCT_MTR'
+    vert = '3:4'  # This is consistent with what I provided Tony Kang for his RIS spinal cord study
+
     if use_iacl_struct is True:
         if patient_id is not None and scan_id is not None:
             scan_directory = os.path.join(scan_directory, patient_id, scan_id, 'pipeline')
@@ -186,16 +188,15 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     #TODO: C2/C4 points
     #TODO: Template registration?
     extract_mtr = pe.Node(sct_util.ExtractMetric(), 'extract_mtr')
-    extract_mtr.inputs.vertebrae = '2:5'
+    extract_mtr.inputs.vertebrae = vert
     extract_mtr.inputs.per_slice = 1
     wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
-    #wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
     wf.connect(warp_template, 'levels', extract_mtr, 'vertebrae_image')
     wf.connect(warp_template, 'cord', extract_mtr, 'label_image')
 
     if compute_csa is True:
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
-        process_seg.inputs.vertebrae = '2:5'
+        process_seg.inputs.vertebrae = vert
         process_seg.inputs.per_slice = 1
         wf.connect(warp_template, 'cord', process_seg, 'input_image')
         wf.connect(warp_template, 'levels', process_seg, 'vertebrae_image')
