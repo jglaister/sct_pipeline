@@ -177,7 +177,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(spine_segmentation, 'spine_segmentation', template_registration, 'spine_segmentation')
     wf.connect(label_utils, 'label_image', template_registration, 'disc_labels')
 
-    warp_template = pe.Node(sct_reg.WarpTemplate(), 'warp_template')
+    warp_template = pe.Node(sct_reg.WarpTemplate(), 'warp_template', needed_outputs=True)
     warp_template.inputs.warp_white_matter = 1
     warp_template.inputs.warp_spinal_levels = 1
     wf.connect(input_node,'mton_file', warp_template,'destination_image')
@@ -196,7 +196,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
         process_seg.inputs.vertebrae = '2:5'
         process_seg.inputs.per_slice = 1
-        wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
+        wf.connect(warp_template, 'cord', process_seg, 'input_image')
         wf.connect(warp_template, 'levels', process_seg, 'vertebrae_image')
         #process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
         #wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
