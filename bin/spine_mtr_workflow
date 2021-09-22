@@ -6,8 +6,8 @@ from sct_pipeline.workflows.processing import create_spinalcord_mtr_workflow
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-mton', '--mton-file', type=str, required=True)
-    parser.add_argument('-mtoff', '--mtoff-file', type=str, required=True)
+    parser.add_argument('-mton', '--mton-file', type=str)
+    parser.add_argument('-mtoff', '--mtoff-file', type=str)
     parser.add_argument('-d', '--scan-directory', type=str, default=os.getcwd())
     parser.add_argument('-p', '--patient-id', type=str)
     parser.add_argument('-s', '--scan-id', type=str)
@@ -23,9 +23,18 @@ if __name__ == '__main__':
     if args.use_iacl_struct and args.patient_id is None and args.scan_id is None:
         raise ValueError('Need to provide a patient_id and scan_id to use the IACL folder structure')
 
-    for a in ['mton_file','mtoff_file']:
-        if getattr(args, a) is not None:
-            setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
+    if args.use_iacl_struct:
+        args.mton_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
+                                      args.patient_id + '_' + args.scan_id + '_SPINE_MT.nii.gz')
+        args.mton_file = os.path.abspath(os.path.expanduser(args.mton_file))
+        args.mtoff_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
+                                       args.patient_id + '_' + args.scan_id + '_SPINE_MT_OFF.nii.gz')
+        args.mtoff_file = os.path.abspath(os.path.expanduser(args.mtoff_file))
+        #TODO: Check file exists?
+    else:
+        for a in ['mton_file','mtoff_file']:
+            if getattr(args, a) is not None:
+                setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
 
     wf = create_spinalcord_mtr_workflow(args.scan_directory, args.patient_id, args.scan_id,
                                         compute_csa=args.compute_csa, use_iacl_struct=args.use_iacl_struct)
