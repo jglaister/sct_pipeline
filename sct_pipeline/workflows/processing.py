@@ -173,12 +173,15 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
         wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
 
+    # Set up base filename for copying outputs
     if use_iacl_struct is True:
         out_file_base = os.path.join(scan_directory, patient_id, scan_id, patient_id + '_' + scan_id + '_SPINE')
     else:
         if patient_id is not None:
             out_file_base = patient_id + '_' + scan_id if scan_id is not None else patient_id
-            out_file_base = os.path.join(scan_directory, out_file_base + '_SPINE')
+        else:
+            out_file_base = 'out'
+        out_file_base = os.path.join(scan_directory, out_file_base + '_SPINE')
 
     export_mtr = pe.Node(io.ExportFile(), name='export_mtr')
     export_mtr.inputs.out_file = out_file_base + '_MTR.nii.gz'
