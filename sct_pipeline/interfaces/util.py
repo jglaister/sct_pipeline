@@ -114,8 +114,10 @@ class LabelUtils(CommandLine):
 class ProcessSegInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input spine image', argstr='-i %s', mandatory=True)
     slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')
-    per_slice = traits.Range(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
+    per_slice = traits.Enum(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
     output_filename = traits.Str(desc='Output filename', argstr='-o %s')
+    vertebrae = traits.Str(desc='Output filename', argstr='-vert %s')
+    vertebrae_image = File(exists=True, desc='Input spine image', argstr='-vertfile %s')
 
 
 class ProcessSegOutputSpec(TraitedSpec):
@@ -140,8 +142,10 @@ class ExtractMetricInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input metric image', argstr='-i %s', mandatory=True)
     label_image = File(exists=True, desc='Input metric image', argstr='-f %s', mandatory=True)
     slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')
-    per_slice = traits.Range(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
+    per_slice = traits.Enum(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
     output_filename = traits.Str(desc='Output filename', argstr='-o %s')
+    vertebrae = traits.Str(desc='Output filename', argstr='-vert %s')
+    vertebrae_image = File(exists=True, desc='Input metric image', argstr='-vertfile %s', mandatory=True)
 
 
 class ExtractMetricOutputSpec(TraitedSpec):

@@ -59,10 +59,11 @@ class WarpTemplateInputSpec(CommandLineInputSpec):
 
 
 class WarpTemplateOutputSpec(TraitedSpec):
-    anat2template = File(exists=True, desc='Output CSV')
-    template2anat = File(exists=True, desc='Output CSV')
-    warp_anat2template = File(exists=True, desc='Output CSV')
-    warp_template2anat = File(exists=True, desc='Output CSV')
+    cord = File(exists=True, desc='Output CSV')
+    levels = File(exists=True, desc='Output CSV')
+    gm = File(exists=True, desc='Output CSV')
+    wm = File(exists=True, desc='Output CSV')
+    # What other outputs are needed?
 
 
 class WarpTemplate(CommandLine):
@@ -73,10 +74,10 @@ class WarpTemplate(CommandLine):
     def _list_outputs(self):
         outputs = self._outputs().get()
 
-        outputs['anat2template'] = os.path.abspath('anat2template.nii.gz')
-        outputs['template2anat'] = os.path.abspath('template2anat.nii.gz')
-        outputs['warp_anat2template'] = os.path.abspath('warp_anat2template.nii.gz')
-        outputs['warp_template2anat'] = os.path.abspath('warp_template2anat.nii.gz')
+        outputs['cord'] = os.path.abspath(os.path.join('label','template', 'PAM50_cord.nii.gz'))
+        outputs['levels'] = os.path.abspath(os.path.join('label','template', 'PAM50_levels.nii.gz'))
+        outputs['gm'] = os.path.abspath(os.path.join('label','template', 'PAM50_gm.nii.gz'))
+        outputs['wm'] = os.path.abspath(os.path.join('label','template', 'PAM50_wm.nii.gz'))
 
         return outputs
 

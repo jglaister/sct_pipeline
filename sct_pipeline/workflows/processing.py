@@ -163,12 +163,6 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(register_multimodal, 'warped_input_image', compute_mtr, 'mt_off_image')
     wf.connect(input_node, 'mton_file', compute_mtr, 'mt_on_image')
 
-    #TODO: C2/C4 points
-    #TODO: Template registration?
-    extract_mtr = pe.Node(sct_util.ExtractMetric(), 'extract_mtr')
-    wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
-    wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
-
     # Assumes the FOV is centered at the c3c4 disc
     label_utils = pe.Node(sct_util.LabelUtils(), 'label_utils')
     label_utils.inputs.output_file = 'c3c4.nii.gz'
@@ -189,9 +183,23 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(input_node,'mton_file', warp_template,'destination_image')
     wf.connect(template_registration, 'warp_template2anat', warp_template,'warping_field')
 
+    #TODO: C2/C4 points
+    #TODO: Template registration?
+    extract_mtr = pe.Node(sct_util.ExtractMetric(), 'extract_mtr')
+    extract_mtr.inputs.vertebrae = '2:5'
+    extract_mtr.inputs.per_slice = 1
+    wf.connect(compute_mtr, 'mtr_image', extract_mtr, 'input_image')
+    #wf.connect(spine_segmentation, 'spine_segmentation', extract_mtr, 'label_image')
+    wf.connect(warp_template, 'levels', extract_mtr, 'vertebrae_image')
+
     if compute_csa is True:
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
+        process_seg.inputs.vertebrae = '2:5'
+        process_seg.inputs.per_slice = 1
         wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
+        wf.connect(warp_template, 'levels', process_seg, 'vertebrae_image')
+        #process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
+        #wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
 
     # Set up base filename for copying outputs
     if use_iacl_struct is True:
