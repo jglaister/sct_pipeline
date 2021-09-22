@@ -140,7 +140,7 @@ class ProcessSeg(CommandLine):
 
 class ExtractMetricInputSpec(CommandLineInputSpec):
     input_image = File(exists=True, desc='Input metric image', argstr='-i %s', mandatory=True)
-    label_image = File(exists=True, desc='Input metric image', argstr='-f %s', mandatory=True)
+    label_image = File(exists=True, desc='Input metric image', argstr='-f %s')
     slices = traits.Str(desc='Slice range of the form start:end', argstr='-z %s')
     per_slice = traits.Enum(0, 1, desc='1 if per slice metrics should be computed, 0 otherwise', argstr='-perslice %d')
     output_filename = traits.Str(desc='Output filename', argstr='-o %s')
