@@ -279,6 +279,6 @@ class ComputeAvgGMWMMTR(BaseInterface):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs['output_file'] = os.path.abspath(split_filename(self.inputs.mtr_file)[1] + '.csv')
+        outputs['output_csv'] = os.path.abspath(split_filename(self.inputs.mtr_file)[1] + '.csv')
 
         return outputs
