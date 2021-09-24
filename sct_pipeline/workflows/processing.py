@@ -254,6 +254,13 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
         export_csa_metric.inputs.out_file = out_file_base + '_CSA_perslice.csv'
         wf.connect(process_seg, 'output_csv', export_csa_metric, 'in_file')
 
+    if compute_avggmwm:
+        export_avggmwm = pe.Node(io.ExportFile(), name='export_csa_metric')
+        export_avggmwm.inputs.check_extension = True
+        export_avggmwm.inputs.clobber = True
+        export_avggmwm.inputs.out_file = out_file_base + '_avg_GM_WM_MTR.csv'
+        wf.connect(compute_avg_gmwm_mtr, 'output_csv', export_avggmwm, 'in_file')
+
     return wf
 
 
