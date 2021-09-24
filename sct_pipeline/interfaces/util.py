@@ -266,8 +266,8 @@ class ComputeAvgGMWMMTR(BaseInterface):
         gm_file = nib.load(self.inputs.mtr_file).get_fdata()
         wm_file = nib.load(self.inputs.mtr_file).get_fdata()
 
-        avg_wm = np.average(mtr_data(wm_file > 0.85))
-        avg_gm = np.average(mtr_data(gm_file > 0.85))
+        avg_wm = np.average(mtr_data[wm_file > 0.85])
+        avg_gm = np.average(mtr_data[gm_file > 0.85])
 
         output_name = split_filename(self.inputs.mtr_file)[1] + '.csv'
         with open(output_name, 'w', newline='') as csvfile:
