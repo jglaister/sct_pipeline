@@ -242,3 +242,43 @@ class ThresholdLabels(BaseInterface):
         outputs['thresholded_label_files'] = [os.path.abspath(split_filename(f)[1] + '_thresh.nii.gz') for f in self.inputs.label_files]
 
         return outputs
+
+class ComputeAvgGMWMMTRInputSpec(BaseInterfaceInputSpec):
+    mtr_file = File(exists=True, desc='input image', mandatory=True)
+    gm_file = File(exists=True, desc='input image', mandatory=True)
+    wm_file = File(exists=True, desc='input image', mandatory=True)
+
+
+class ComputeAvgGMWMMTROutputSpec(TraitedSpec):
+    output_file = File(exists=True, desc='output template')
+
+
+class ComputeAvgGMWMMTR(BaseInterface):
+    input_spec = ComputeAvgGMWMMTRInputSpec
+    output_spec = ComputeAvgGMWMMTROutputSpec
+
+    def _run_interface(self, runtime):
+        import nibabel as nib
+        import numpy as np
+        import csv
+
+        mtr_data = nib.load(self.inputs.mtr_file).get_fdata()
+        gm_file = nib.load(self.inputs.mtr_file).get_fdata()
+        wm_file = nib.load(self.inputs.mtr_file).get_fdata()
+
+        avg_wm = np.average(mtr_data(wm_file > 0.85))
+        avg_gm = np.average(mtr_data(gm_file > 0.85))
+
+        output_name = split_filename(self.inputs.mtr_file)[1] + '.csv'
+        with open(output_name, 'w', newline='') as csvfile:
+            writer = csv.write(csvfile, delimiter=' ')
+            writer.writerow(['GM_MTR', 'WM_MTR'])
+            writer.writerow([avg_gm, avg_wm])
+
+        return runtime
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['output_file'] = os.path.abspath(split_filename(self.inputs.mtr_file)[1] + '.csv')
+
+        return outputs

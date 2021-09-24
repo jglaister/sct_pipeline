@@ -124,10 +124,10 @@ def create_spinalcord_dti_workflow(scan_directory, patient_id=None, scan_id=None
 
 
 def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None,
-                                   compute_csa=False, use_iacl_struct=False):
+                                   compute_csa=False, compute_avggmwm=False, use_iacl_struct=False):
     name = 'SCT_MTR'
     vert = '3:4'  # This is consistent with what I provided Tony Kang for his RIS spinal cord study
-
+    # TODO: Add corrected MTR
     if use_iacl_struct is True:
         if patient_id is not None and scan_id is not None:
             scan_directory = os.path.join(scan_directory, patient_id, scan_id, 'pipeline')
@@ -194,17 +194,21 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     wf.connect(warp_template, 'levels', extract_mtr, 'vertebrae_image')
     wf.connect(warp_template, 'cord', extract_mtr, 'label_image')
 
-    if compute_csa is True:
+    if compute_csa:
         process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
         process_seg.inputs.vertebrae = vert
         process_seg.inputs.per_slice = 1
         wf.connect(warp_template, 'cord', process_seg, 'input_image')
         wf.connect(warp_template, 'levels', process_seg, 'vertebrae_image')
-        #process_seg = pe.Node(sct_util.ProcessSeg(), 'process_seg')
-        #wf.connect(spine_segmentation, 'spine_segmentation', process_seg, 'input_image')
+
+    if compute_avggmwm:
+        compute_avg_gmwm_mtr = pe.Node(sct_util.ComputeAvgGMWMMTR(), 'compute_avg_gmwm_mtr')
+        wf.connect(compute_mtr, 'mtr_image', compute_avg_gmwm_mtr, 'mtr_file')
+        wf.connect(warp_template, 'gm', compute_avg_gmwm_mtr, 'gm_file')
+        wf.connect(warp_template, 'wm', compute_avg_gmwm_mtr, 'wm_file')
 
     # Set up base filename for copying outputs
-    if use_iacl_struct is True:
+    if use_iacl_struct:
         out_file_base = os.path.join(scan_directory, patient_id, scan_id, patient_id + '_' + scan_id + '_SPINE')
     else:
         if patient_id is not None:
@@ -243,7 +247,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     export_mtr_metric.inputs.out_file = out_file_base + '_MTR_perslice.csv'
     wf.connect(extract_mtr, 'output_csv', export_mtr_metric, 'in_file')
 
-    if compute_csa is True:
+    if compute_csa:
         export_csa_metric = pe.Node(io.ExportFile(), name='export_csa_metric')
         export_csa_metric.inputs.check_extension = True
         export_csa_metric.inputs.clobber = True
