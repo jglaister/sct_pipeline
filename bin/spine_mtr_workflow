@@ -25,10 +25,10 @@ if __name__ == '__main__':
         raise ValueError('Need to provide a patient_id and scan_id to use the IACL folder structure')
 
     if args.use_iacl_struct:
-        args.mton_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, #'raw',
+        args.mton_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
                                       args.patient_id + '_' + args.scan_id + '_SPINE_MT.nii.gz')
         args.mton_file = os.path.abspath(os.path.expanduser(args.mton_file))
-        args.mtoff_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, #'raw',
+        args.mtoff_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
                                        args.patient_id + '_' + args.scan_id + '_SPINE_MT_OFF.nii.gz')
         args.mtoff_file = os.path.abspath(os.path.expanduser(args.mtoff_file))
         #TODO: Check file exists?
