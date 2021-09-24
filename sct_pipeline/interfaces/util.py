@@ -271,7 +271,7 @@ class ComputeAvgGMWMMTR(BaseInterface):
 
         output_name = split_filename(self.inputs.mtr_file)[1] + '.csv'
         with open(output_name, 'w', newline='') as csvfile:
-            writer = csv.write(csvfile, delimiter=' ')
+            writer = csv.writer(csvfile, delimiter=' ')
             writer.writerow(['GM_MTR', 'WM_MTR'])
             writer.writerow([avg_gm, avg_wm])
 
