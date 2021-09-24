@@ -250,7 +250,7 @@ class ComputeAvgGMWMMTRInputSpec(BaseInterfaceInputSpec):
 
 
 class ComputeAvgGMWMMTROutputSpec(TraitedSpec):
-    output_file = File(exists=True, desc='output template')
+    output_csv = File(exists=True, desc='output template')
 
 
 class ComputeAvgGMWMMTR(BaseInterface):
