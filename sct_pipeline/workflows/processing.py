@@ -218,11 +218,15 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
             out_file_base = 'out'
         out_file_base = os.path.join(scan_directory, out_file_base + '_SPINE')
 
+    # Use the template warped cord segmentation as the final spine segmentation
+    # I've found this to be a smoother result IF the registration is successful
+    # Whereas the DeepSeg result is boxier, but may be better if the template
+    # can't register to the spine (this happens more with T2 spines)
     export_segmentation = pe.Node(io.ExportFile(), name='export_segmentation')
     export_segmentation.inputs.check_extension = True
     export_segmentation.inputs.clobber = True
     export_segmentation.inputs.out_file = out_file_base + '_seg.nii.gz'
-    wf.connect(spine_segmentation, 'spine_segmentation', export_segmentation, 'in_file')
+    wf.connect(warp_template, 'cord', export_segmentation, 'in_file')
 
     export_mtr = pe.Node(io.ExportFile(), name='export_mtr')
     export_mtr.inputs.check_extension = True
