@@ -27,16 +27,16 @@ if __name__ == '__main__':
     if args.use_iacl_struct:
         args.mton_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
                                       args.patient_id + '_' + args.scan_id + '_SPINE_MT.nii.gz')
-        args.mton_file = os.path.abspath(os.path.expanduser(args.mton_file))
+        args.mton_file = os.path.abspath(args.mton_file)
         args.mtoff_file = os.path.join(args.scan_directory, args.patient_id, args.scan_id, 'raw',
                                        args.patient_id + '_' + args.scan_id + '_SPINE_MT_OFF.nii.gz')
-        args.mtoff_file = os.path.abspath(os.path.expanduser(args.mtoff_file))
+        args.mtoff_file = os.path.abspath(args.mtoff_file)
         #TODO: Check file exists?
     else:
         for a in ['mton_file','mtoff_file']:
             if getattr(args, a) is not None:
                 setattr(args, a, os.path.abspath(os.path.expanduser(getattr(args, a))))
-
+    print(args.mton_file)
     wf = create_spinalcord_mtr_workflow(args.scan_directory, args.patient_id, args.scan_id,
                                         compute_csa=args.compute_csa, compute_avggmwm=args.compute_avg_mtr,
                                         use_iacl_struct=args.use_iacl_struct)
