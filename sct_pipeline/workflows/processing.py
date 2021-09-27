@@ -130,7 +130,7 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     # TODO: Add corrected MTR
     if use_iacl_struct is True:
         if patient_id is not None and scan_id is not None:
-            scan_directory = os.path.join(scan_directory, patient_id, scan_id, 'pipeline')
+            scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')
             name += '_' + scan_id
         else:
             raise ValueError('Need to provide a patient_id and scan_id to use the IACL folder structure')
