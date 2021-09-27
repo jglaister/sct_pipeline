@@ -128,19 +128,20 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
     name = 'SCT_MTR'
     vert = '3:4'  # This is consistent with what I provided Tony Kang for his RIS spinal cord study
     # TODO: Add corrected MTR
+    root_dir = scan_directory
     if use_iacl_struct is True:
         if patient_id is not None and scan_id is not None:
-            scan_directory = os.path.join(scan_directory, patient_id, 'pipeline')
+            root_dir = os.path.join(root_dir, patient_id, 'pipeline')
             name += '_' + scan_id
         else:
             raise ValueError('Need to provide a patient_id and scan_id to use the IACL folder structure')
     else:
         if patient_id is not None:
             scan_folder = patient_id + '_' + scan_id if scan_id is not None else patient_id
-            scan_directory = (os.path.join(scan_directory, scan_folder))
+            root_dir = (os.path.join(root_dir, scan_folder))
         # else just use the scan_directory
 
-    wf = pe.Workflow(name, scan_directory)
+    wf = pe.Workflow(name, root_dir)
 
     input_node = pe.Node(util.IdentityInterface(['mton_file', 'mtoff_file']), 'input_node')
 
