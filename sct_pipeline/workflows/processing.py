@@ -13,6 +13,9 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 import sct_pipeline.interfaces.dmri as sct_dmri
 
+from fpdf import FPDF
+from PIL.Image import Image
+
 class PipelineWorkflow(pe.Workflow):
     def __init__(self, name, scan_directory, patient_id=None, scan_id=None):
         self.scan_directory = scan_directory
@@ -265,6 +268,14 @@ def create_spinalcord_mtr_workflow(scan_directory, patient_id=None, scan_id=None
         export_avggmwm.inputs.clobber = True
         export_avggmwm.inputs.out_file = out_file_base + '_avg_GM_WM_MTR.csv'
         wf.connect(compute_avg_gmwm_mtr, 'output_csv', export_avggmwm, 'in_file')
+
+    #if True:
+        #Write segmentation images to disk
+
+        #Write MTR images to disk
+
+
+        #Write PDF with images to disk
 
     return wf
 
