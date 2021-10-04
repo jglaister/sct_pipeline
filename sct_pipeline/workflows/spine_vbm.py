@@ -11,13 +11,13 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 
 
-def create_spine_template_workflow(output_root, template_index=0, max_label=9):
+def create_spine_template_workflow(output_root, init_template_index=0, max_label=9):
     # TODO: Split into seperate workflows
+    # Segmentation, template registration/formation, vbm analysis
     wf = pe.Workflow(name='spine_template', base_dir=output_root)
 
-    input_node = pe.Node(
-        interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
-        name='input_node')
+    input_node = pe.Node(interface=util.IdentityInterface(fields=['spine_files', 'design_mat', 'tcon']),
+                         name='input_node')
 
     spine_segmentation = pe.MapNode(interface=sct_seg.DeepSeg(),
                                     iterfield=['input_image'],
@@ -64,17 +64,17 @@ def create_spine_template_workflow(output_root, template_index=0, max_label=9):
     # Select the template_index element of the straightened spinalcord to use as the initial template
     select_init_template = pe.Node(interface=util.Select(),
                                    name='select_init_template')
-    select_init_template.inputs.index = [template_index]
+    select_init_template.inputs.index = [init_template_index]
     wf.connect(straighten_spinalcord, 'straightened_input', select_init_template, 'inlist')
 
     select_init_label = pe.Node(interface=util.Select(),
                                 name='select_init_label')
-    select_init_label.inputs.index = [template_index]
+    select_init_label.inputs.index = [init_template_index]
     wf.connect(threshold_labels, 'thresholded_label_files', select_init_label, 'inlist')
 
     select_init_seg = pe.Node(interface=util.Select(),
                               name='select_init_seg')
-    select_init_seg.inputs.index = [template_index]
+    select_init_seg.inputs.index = [init_template_index]
     wf.connect(straighten_segmentation, 'output_file', select_init_seg, 'inlist')
 
     merge_moving_images = pe.MapNode(interface=util.Merge(3), 
