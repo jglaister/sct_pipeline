@@ -7,11 +7,8 @@ from sct_pipeline.workflows.spine_vbm import create_spine_template_workflow
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--spine-files', nargs='+', type=str, required=True)
-    #parser.add_argument('-s', '--seg-files', nargs='+', type=str, required=True)
-    #parser.add_argument('-it', '--init-template', type=str, required=True)
     parser.add_argument('--design-mat', type=str, required=True)
     parser.add_argument('--tcon', type=str, required=True)
-    # parser.add_argument('-s', '--sigma', type=int, default=3)
     parser.add_argument('-o', '--output-root', type=str, default=os.getcwd())
     parser.add_argument('-t', '--num_threads', type=int, default=1)
     args = parser.parse_args()
@@ -29,8 +26,7 @@ if __name__ == '__main__':
 
     if args.spine_files is not None:
         wf.inputs.input_node.spine_files = args.spine_files
-    #if args.seg_files is not None:
-    #    wf.inputs.input_node.seg_files = args.seg_files
+
     for a in ['design_mat', 'tcon']:
         if getattr(args, a) is not None:
             setattr(wf.inputs.input_node, a, getattr(args, a))

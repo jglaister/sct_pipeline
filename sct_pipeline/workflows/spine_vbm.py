@@ -11,6 +11,51 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 
 
+def spine_label_registration(name, deformable=False):
+    registration_node = pe.MapNode(interface=ants.Registration(),
+                                         iterfield=['moving_image'],
+                                         name=name)
+    registration_node.inputs.dimension = 3
+    registration_node.inputs.interpolation = 'Linear'
+    registration_node.inputs.metric = [['MI', 'MeanSquares', 'MeanSquares'],
+                                             ['MI', 'MeanSquares', 'MeanSquares'],
+                                             ['MI', 'MeanSquares', 'MeanSquares']]
+    if deformable:
+        registration_node.inputs.metric_weight = [[0.4, 0.3, 0.3], [0.4, 0.3, 0.3], [0.4, 0.3, 0.3]]
+        registration_node.inputs.radius_or_number_of_bins = [[32, 5, 5], [32, 5, 5], [32, 5, 5]]
+        registration_node.inputs.sampling_strategy = [['Regular', 'Regular', 'Regular'],
+                                                            ['Regular', 'Regular', 'Regular'],
+                                                            ['Regular', 'Regular', 'Regular']]
+        registration_node.inputs.sampling_percentage = [[0.25, 0.25, 0.25], [0.25, 0.25, 0.25], [0.25, 0.25, 0.25]]
+        registration_node.inputs.transforms = ['Rigid', 'Affine', 'SyN']
+        registration_node.inputs.transform_parameters = [(0.1,), (0.1,), (0.1, 3, 0)]
+        registration_node.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25], [100, 10, 5]]
+        registration_node.inputs.convergence_threshold = [1e-6, 1e-6, 1e-4]
+        registration_node.inputs.convergence_window_size = [10, 10, 10]
+        registration_node.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1], [2, 1, 0]]
+        registration_node.inputs.sigma_units = ['vox', 'vox', 'vox']
+        registration_node.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1], [4, 2, 1]]
+    else: #affine
+        registration_node.inputs.metric_weight = [[0.4, 0.3, 0.3], [0.4, 0.3, 0.3]]
+        registration_node.inputs.radius_or_number_of_bins = [[32, 5, 5], [32, 5, 5]]
+        registration_node.inputs.sampling_strategy = [['Regular', 'Regular', 'Regular'],
+                                                      ['Regular', 'Regular', 'Regular']]
+        registration_node.inputs.sampling_percentage = [[0.25, 0.25, 0.25], [0.25, 0.25, 0.25]]
+        registration_node.inputs.transforms = ['Rigid', 'Affine']
+        registration_node.inputs.transform_parameters = [(0.1,), (0.1,)]
+        registration_node.inputs.number_of_iterations = [[100, 50, 25], [100, 50, 25]]
+        registration_node.inputs.convergence_threshold = [1e-6, 1e-6]
+        registration_node.inputs.convergence_window_size = [10, 10]
+        registration_node.inputs.smoothing_sigmas = [[4, 2, 1], [4, 2, 1]]
+        registration_node.inputs.sigma_units = ['vox', 'vox']
+        registration_node.inputs.shrink_factors = [[4, 2, 1], [4, 2, 1]]
+
+    registration_node.inputs.write_composite_transform = True
+    registration_node.inputs.initial_moving_transform_com = 1
+    registration_node.inputs.output_warped_image = True
+
+    return registration_node
+
 def create_spine_template_workflow(output_root, init_template_index=0, max_label=9):
     # TODO: Split into seperate workflows
     # Segmentation, template registration/formation, vbm analysis
