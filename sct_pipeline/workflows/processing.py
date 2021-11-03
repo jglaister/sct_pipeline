@@ -13,8 +13,8 @@ import sct_pipeline.interfaces.segmentation as sct_seg
 import sct_pipeline.interfaces.util as sct_util
 import sct_pipeline.interfaces.dmri as sct_dmri
 
-from fpdf import FPDF
-from PIL.Image import Image
+# from fpdf import FPDF
+# from PIL.Image import Image
 
 class PipelineWorkflow(pe.Workflow):
     def __init__(self, name, scan_directory, patient_id=None, scan_id=None):
